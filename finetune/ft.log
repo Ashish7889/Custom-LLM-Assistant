@@ -1,0 +1,37 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+`torch_dtype` is deprecated! Use `dtype` instead!
+Device: cuda
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|##########| 201/201 [00:00<00:00, 10378.36it/s]
+Trainable params: 2,252,800 / 1,102,301,184 (0.20%)
+Tokenizing 2000 instruction examples ...
+  2000 examples ready
+Plan: 125 optimizer steps/epoch x 2 epochs = 250 total
+
+step   10/250 | epoch 1 | loss 1.4120
+step   20/250 | epoch 1 | loss 1.3552
+step   30/250 | epoch 1 | loss 1.1543
+step   40/250 | epoch 1 | loss 1.2205
+step   50/250 | epoch 1 | loss 1.0820
+step   60/250 | epoch 1 | loss 1.1492
+step   70/250 | epoch 1 | loss 1.1088
+step   80/250 | epoch 1 | loss 1.0348
+step   90/250 | epoch 1 | loss 1.1263
+step  100/250 | epoch 1 | loss 1.0854
+step  110/250 | epoch 1 | loss 1.1479
+step  120/250 | epoch 1 | loss 1.1614
+step  130/250 | epoch 2 | loss 1.0683
+step  140/250 | epoch 2 | loss 1.0298
+step  150/250 | epoch 2 | loss 1.1293
+step  160/250 | epoch 2 | loss 1.1265
+step  170/250 | epoch 2 | loss 1.0893
+step  180/250 | epoch 2 | loss 1.0604
+step  190/250 | epoch 2 | loss 1.0681
+step  200/250 | epoch 2 | loss 1.0929
+step  210/250 | epoch 2 | loss 0.9849
+step  220/250 | epoch 2 | loss 1.0849
+step  230/250 | epoch 2 | loss 1.1015
+step  240/250 | epoch 2 | loss 1.0907
+step  250/250 | epoch 2 | loss 1.1102
+
+Saved LoRA adapter to adapter/ (3 files)
+Now run:  python chat.py

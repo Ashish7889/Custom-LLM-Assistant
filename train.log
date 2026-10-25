@@ -1,0 +1,227 @@
+Training on: cuda (NVIDIA GeForce RTX 3060 Laptop GPU)
+Model: 10,795,776 parameters
+Plan: 5000 steps, batch=48x256 characters
+
+step     1/5000 | training loss 4.2512
+step    25/5000 | training loss 2.6936
+step    50/5000 | training loss 2.5270
+step    75/5000 | training loss 2.4817
+step   100/5000 | training loss 2.4802
+step   125/5000 | training loss 2.4382
+step   150/5000 | training loss 2.4192
+step   175/5000 | training loss 2.4176
+step   200/5000 | training loss 2.2979
+step   225/5000 | training loss 2.1855
+step   250/5000 | training loss 2.0728
+-- eval @ step 250: train 2.0438 | val 2.1082 --
+step   275/5000 | training loss 2.0385
+step   300/5000 | training loss 1.9511
+step   325/5000 | training loss 1.9023
+step   350/5000 | training loss 1.8227
+step   375/5000 | training loss 1.8238
+step   400/5000 | training loss 1.7786
+step   425/5000 | training loss 1.6980
+step   450/5000 | training loss 1.7128
+step   475/5000 | training loss 1.6661
+step   500/5000 | training loss 1.6595
+-- eval @ step 500: train 1.5921 | val 1.7605 --
+step   525/5000 | training loss 1.6384
+step   550/5000 | training loss 1.6197
+step   575/5000 | training loss 1.5654
+step   600/5000 | training loss 1.5882
+step   625/5000 | training loss 1.5458
+step   650/5000 | training loss 1.5391
+step   675/5000 | training loss 1.5179
+step   700/5000 | training loss 1.5019
+step   725/5000 | training loss 1.5058
+step   750/5000 | training loss 1.4439
+-- eval @ step 750: train 1.4069 | val 1.6404 --
+step   775/5000 | training loss 1.4607
+step   800/5000 | training loss 1.4542
+step   825/5000 | training loss 1.4455
+step   850/5000 | training loss 1.4254
+step   875/5000 | training loss 1.3958
+step   900/5000 | training loss 1.4158
+step   925/5000 | training loss 1.4278
+step   950/5000 | training loss 1.4083
+step   975/5000 | training loss 1.3898
+step  1000/5000 | training loss 1.3666
+-- eval @ step 1000: train 1.3177 | val 1.6113 --
+step  1025/5000 | training loss 1.3832
+step  1050/5000 | training loss 1.3554
+step  1075/5000 | training loss 1.3370
+step  1100/5000 | training loss 1.3688
+step  1125/5000 | training loss 1.3499
+step  1150/5000 | training loss 1.3146
+step  1175/5000 | training loss 1.3306
+step  1200/5000 | training loss 1.3696
+step  1225/5000 | training loss 1.3306
+step  1250/5000 | training loss 1.3251
+-- eval @ step 1250: train 1.2454 | val 1.5807 --
+step  1275/5000 | training loss 1.3453
+step  1300/5000 | training loss 1.2741
+step  1325/5000 | training loss 1.2839
+step  1350/5000 | training loss 1.2956
+step  1375/5000 | training loss 1.2547
+step  1400/5000 | training loss 1.2635
+step  1425/5000 | training loss 1.2860
+step  1450/5000 | training loss 1.2597
+step  1475/5000 | training loss 1.2367
+step  1500/5000 | training loss 1.2730
+-- eval @ step 1500: train 1.1914 | val 1.5585 --
+step  1525/5000 | training loss 1.2568
+step  1550/5000 | training loss 1.2320
+step  1575/5000 | training loss 1.2763
+step  1600/5000 | training loss 1.2286
+step  1625/5000 | training loss 1.1851
+step  1650/5000 | training loss 1.2385
+step  1675/5000 | training loss 1.1881
+step  1700/5000 | training loss 1.2222
+step  1725/5000 | training loss 1.1927
+step  1750/5000 | training loss 1.2312
+-- eval @ step 1750: train 1.1390 | val 1.5458 --
+step  1775/5000 | training loss 1.2064
+step  1800/5000 | training loss 1.1850
+step  1825/5000 | training loss 1.1925
+step  1850/5000 | training loss 1.1811
+step  1875/5000 | training loss 1.1842
+step  1900/5000 | training loss 1.2108
+step  1925/5000 | training loss 1.2098
+step  1950/5000 | training loss 1.1115
+step  1975/5000 | training loss 1.1799
+step  2000/5000 | training loss 1.1700
+-- eval @ step 2000: train 1.0888 | val 1.5502 --
+step  2025/5000 | training loss 1.1400
+step  2050/5000 | training loss 1.1845
+step  2075/5000 | training loss 1.1404
+step  2100/5000 | training loss 1.1571
+step  2125/5000 | training loss 1.1533
+step  2150/5000 | training loss 1.1569
+step  2175/5000 | training loss 1.1371
+step  2200/5000 | training loss 1.1027
+step  2225/5000 | training loss 1.1390
+step  2250/5000 | training loss 1.1273
+-- eval @ step 2250: train 1.0446 | val 1.5822 --
+step  2275/5000 | training loss 1.1169
+step  2300/5000 | training loss 1.1145
+step  2325/5000 | training loss 1.0723
+step  2350/5000 | training loss 1.1203
+step  2375/5000 | training loss 1.1119
+step  2400/5000 | training loss 1.1273
+step  2425/5000 | training loss 1.1240
+step  2450/5000 | training loss 1.0786
+step  2475/5000 | training loss 1.0771
+step  2500/5000 | training loss 1.0774
+-- eval @ step 2500: train 0.9864 | val 1.5871 --
+step  2525/5000 | training loss 1.0939
+step  2550/5000 | training loss 1.0655
+step  2575/5000 | training loss 1.0557
+step  2600/5000 | training loss 1.0358
+step  2625/5000 | training loss 1.0658
+step  2650/5000 | training loss 1.0456
+step  2675/5000 | training loss 1.0610
+step  2700/5000 | training loss 1.0469
+step  2725/5000 | training loss 1.0525
+step  2750/5000 | training loss 1.0266
+-- eval @ step 2750: train 0.9387 | val 1.6231 --
+step  2775/5000 | training loss 1.0279
+step  2800/5000 | training loss 1.0370
+step  2825/5000 | training loss 1.0075
+step  2850/5000 | training loss 1.0341
+step  2875/5000 | training loss 1.0030
+step  2900/5000 | training loss 1.0269
+step  2925/5000 | training loss 1.0321
+step  2950/5000 | training loss 1.0354
+step  2975/5000 | training loss 0.9993
+step  3000/5000 | training loss 1.0087
+-- eval @ step 3000: train 0.8837 | val 1.6305 --
+step  3025/5000 | training loss 0.9869
+step  3050/5000 | training loss 0.9662
+step  3075/5000 | training loss 0.9527
+step  3100/5000 | training loss 0.9947
+step  3125/5000 | training loss 0.9718
+step  3150/5000 | training loss 0.9632
+step  3175/5000 | training loss 0.9639
+step  3200/5000 | training loss 0.9858
+step  3225/5000 | training loss 0.9727
+step  3250/5000 | training loss 0.9486
+-- eval @ step 3250: train 0.8366 | val 1.6764 --
+step  3275/5000 | training loss 0.9380
+step  3300/5000 | training loss 0.9417
+step  3325/5000 | training loss 0.9621
+step  3350/5000 | training loss 0.9388
+step  3375/5000 | training loss 0.9367
+step  3400/5000 | training loss 0.9147
+step  3425/5000 | training loss 0.9370
+step  3450/5000 | training loss 0.8694
+step  3475/5000 | training loss 0.8850
+step  3500/5000 | training loss 0.8716
+-- eval @ step 3500: train 0.7897 | val 1.6968 --
+step  3525/5000 | training loss 0.9305
+step  3550/5000 | training loss 0.9152
+step  3575/5000 | training loss 0.8726
+step  3600/5000 | training loss 0.9193
+step  3625/5000 | training loss 0.8998
+step  3650/5000 | training loss 0.8844
+step  3675/5000 | training loss 0.8765
+step  3700/5000 | training loss 0.8700
+step  3725/5000 | training loss 0.8934
+step  3750/5000 | training loss 0.8674
+-- eval @ step 3750: train 0.7493 | val 1.7453 --
+step  3775/5000 | training loss 0.8855
+step  3800/5000 | training loss 0.8627
+step  3825/5000 | training loss 0.8823
+step  3850/5000 | training loss 0.8597
+step  3875/5000 | training loss 0.8716
+step  3900/5000 | training loss 0.8747
+step  3925/5000 | training loss 0.8386
+step  3950/5000 | training loss 0.8514
+step  3975/5000 | training loss 0.8418
+step  4000/5000 | training loss 0.8382
+-- eval @ step 4000: train 0.7122 | val 1.7726 --
+step  4025/5000 | training loss 0.8358
+step  4050/5000 | training loss 0.8584
+step  4075/5000 | training loss 0.8357
+step  4100/5000 | training loss 0.8513
+step  4125/5000 | training loss 0.8143
+step  4150/5000 | training loss 0.8350
+step  4175/5000 | training loss 0.8091
+step  4200/5000 | training loss 0.8187
+step  4225/5000 | training loss 0.8312
+step  4250/5000 | training loss 0.8169
+-- eval @ step 4250: train 0.6765 | val 1.8199 --
+step  4275/5000 | training loss 0.8163
+step  4300/5000 | training loss 0.8276
+step  4325/5000 | training loss 0.8377
+step  4350/5000 | training loss 0.8286
+step  4375/5000 | training loss 0.8039
+step  4400/5000 | training loss 0.8037
+step  4425/5000 | training loss 0.8119
+step  4450/5000 | training loss 0.7931
+step  4475/5000 | training loss 0.7897
+step  4500/5000 | training loss 0.7822
+-- eval @ step 4500: train 0.6480 | val 1.8573 --
+step  4525/5000 | training loss 0.7903
+step  4550/5000 | training loss 0.7750
+step  4575/5000 | training loss 0.8119
+step  4600/5000 | training loss 0.8262
+step  4625/5000 | training loss 0.7863
+step  4650/5000 | training loss 0.7922
+step  4675/5000 | training loss 0.8081
+step  4700/5000 | training loss 0.7917
+step  4725/5000 | training loss 0.8011
+step  4750/5000 | training loss 0.7590
+-- eval @ step 4750: train 0.6312 | val 1.8512 --
+step  4775/5000 | training loss 0.7945
+step  4800/5000 | training loss 0.7652
+step  4825/5000 | training loss 0.7778
+step  4850/5000 | training loss 0.7571
+step  4875/5000 | training loss 0.7996
+step  4900/5000 | training loss 0.7658
+step  4925/5000 | training loss 0.7499
+step  4950/5000 | training loss 0.8187
+step  4975/5000 | training loss 0.7560
+step  5000/5000 | training loss 0.7876
+-- eval @ step 5000: train 0.6075 | val 1.8620 --
+
+Saved final model to checkpoints/tinyclaude.pt. Now run: python chat.py

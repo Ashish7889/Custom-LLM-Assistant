@@ -1,0 +1,235 @@
+Training on: cuda (NVIDIA GeForce RTX 3060 Laptop GPU)
+Model: 10,795,776 parameters
+Plan: 5000 steps, batch=48x256 characters
+
+step     1/5000 | training loss 4.2931
+step    25/5000 | training loss 2.6929
+step    50/5000 | training loss 2.5417
+step    75/5000 | training loss 2.4762
+step   100/5000 | training loss 2.4489
+step   125/5000 | training loss 2.4248
+step   150/5000 | training loss 2.3909
+step   175/5000 | training loss 2.3402
+step   200/5000 | training loss 2.3016
+step   225/5000 | training loss 2.2526
+step   250/5000 | training loss 2.1339
+-- eval @ step 250: train 2.0977 | val 2.1599 --
+   (new best val 2.1599 -> saved checkpoints/tinyclaude-best.pt)
+step   275/5000 | training loss 2.0555
+step   300/5000 | training loss 1.9641
+step   325/5000 | training loss 1.9132
+step   350/5000 | training loss 1.8384
+step   375/5000 | training loss 1.7862
+step   400/5000 | training loss 1.7609
+step   425/5000 | training loss 1.7511
+step   450/5000 | training loss 1.6777
+step   475/5000 | training loss 1.6641
+step   500/5000 | training loss 1.6597
+-- eval @ step 500: train 1.5952 | val 1.7723 --
+   (new best val 1.7723 -> saved checkpoints/tinyclaude-best.pt)
+step   525/5000 | training loss 1.6428
+step   550/5000 | training loss 1.6742
+step   575/5000 | training loss 1.6075
+step   600/5000 | training loss 1.5563
+step   625/5000 | training loss 1.5355
+step   650/5000 | training loss 1.5293
+step   675/5000 | training loss 1.4798
+step   700/5000 | training loss 1.5175
+step   725/5000 | training loss 1.4594
+step   750/5000 | training loss 1.4787
+-- eval @ step 750: train 1.4104 | val 1.6785 --
+   (new best val 1.6785 -> saved checkpoints/tinyclaude-best.pt)
+step   775/5000 | training loss 1.4420
+step   800/5000 | training loss 1.4764
+step   825/5000 | training loss 1.4469
+step   850/5000 | training loss 1.4798
+step   875/5000 | training loss 1.4403
+step   900/5000 | training loss 1.4214
+step   925/5000 | training loss 1.4051
+step   950/5000 | training loss 1.3584
+step   975/5000 | training loss 1.3112
+step  1000/5000 | training loss 1.4129
+-- eval @ step 1000: train 1.3035 | val 1.5901 --
+   (new best val 1.5901 -> saved checkpoints/tinyclaude-best.pt)
+step  1025/5000 | training loss 1.3734
+step  1050/5000 | training loss 1.3616
+step  1075/5000 | training loss 1.3561
+step  1100/5000 | training loss 1.3358
+step  1125/5000 | training loss 1.3254
+step  1150/5000 | training loss 1.3421
+step  1175/5000 | training loss 1.3472
+step  1200/5000 | training loss 1.3596
+step  1225/5000 | training loss 1.3277
+step  1250/5000 | training loss 1.3187
+-- eval @ step 1250: train 1.2443 | val 1.5626 --
+   (new best val 1.5626 -> saved checkpoints/tinyclaude-best.pt)
+step  1275/5000 | training loss 1.2996
+step  1300/5000 | training loss 1.2821
+step  1325/5000 | training loss 1.2820
+step  1350/5000 | training loss 1.2739
+step  1375/5000 | training loss 1.2473
+step  1400/5000 | training loss 1.2458
+step  1425/5000 | training loss 1.2872
+step  1450/5000 | training loss 1.2844
+step  1475/5000 | training loss 1.2637
+step  1500/5000 | training loss 1.2356
+-- eval @ step 1500: train 1.1882 | val 1.5422 --
+   (new best val 1.5422 -> saved checkpoints/tinyclaude-best.pt)
+step  1525/5000 | training loss 1.2263
+step  1550/5000 | training loss 1.2683
+step  1575/5000 | training loss 1.2401
+step  1600/5000 | training loss 1.2674
+step  1625/5000 | training loss 1.1805
+step  1650/5000 | training loss 1.2087
+step  1675/5000 | training loss 1.2171
+step  1700/5000 | training loss 1.2063
+step  1725/5000 | training loss 1.1786
+step  1750/5000 | training loss 1.1892
+-- eval @ step 1750: train 1.1373 | val 1.5623 --
+step  1775/5000 | training loss 1.2115
+step  1800/5000 | training loss 1.2009
+step  1825/5000 | training loss 1.2100
+step  1850/5000 | training loss 1.1665
+step  1875/5000 | training loss 1.1961
+step  1900/5000 | training loss 1.1870
+step  1925/5000 | training loss 1.1888
+step  1950/5000 | training loss 1.1739
+step  1975/5000 | training loss 1.1659
+step  2000/5000 | training loss 1.1826
+-- eval @ step 2000: train 1.0883 | val 1.5223 --
+   (new best val 1.5223 -> saved checkpoints/tinyclaude-best.pt)
+step  2025/5000 | training loss 1.1413
+step  2050/5000 | training loss 1.1613
+step  2075/5000 | training loss 1.1464
+step  2100/5000 | training loss 1.1357
+step  2125/5000 | training loss 1.1554
+step  2150/5000 | training loss 1.1371
+step  2175/5000 | training loss 1.1151
+step  2200/5000 | training loss 1.1415
+step  2225/5000 | training loss 1.1243
+step  2250/5000 | training loss 1.1095
+-- eval @ step 2250: train 1.0376 | val 1.5466 --
+step  2275/5000 | training loss 1.1361
+step  2300/5000 | training loss 1.1365
+step  2325/5000 | training loss 1.0868
+step  2350/5000 | training loss 1.0622
+step  2375/5000 | training loss 1.1056
+step  2400/5000 | training loss 1.0889
+step  2425/5000 | training loss 1.0970
+step  2450/5000 | training loss 1.0612
+step  2475/5000 | training loss 1.0586
+step  2500/5000 | training loss 1.0569
+-- eval @ step 2500: train 0.9861 | val 1.5483 --
+step  2525/5000 | training loss 1.0974
+step  2550/5000 | training loss 1.0555
+step  2575/5000 | training loss 1.0595
+step  2600/5000 | training loss 1.0570
+step  2625/5000 | training loss 1.0668
+step  2650/5000 | training loss 1.0648
+step  2675/5000 | training loss 1.0660
+step  2700/5000 | training loss 1.0433
+step  2725/5000 | training loss 1.0225
+step  2750/5000 | training loss 1.0436
+-- eval @ step 2750: train 0.9428 | val 1.6066 --
+step  2775/5000 | training loss 1.0165
+step  2800/5000 | training loss 1.0434
+step  2825/5000 | training loss 1.0270
+step  2850/5000 | training loss 1.0170
+step  2875/5000 | training loss 0.9650
+step  2900/5000 | training loss 0.9725
+step  2925/5000 | training loss 0.9859
+step  2950/5000 | training loss 1.0016
+step  2975/5000 | training loss 0.9868
+step  3000/5000 | training loss 1.0187
+-- eval @ step 3000: train 0.8829 | val 1.5960 --
+step  3025/5000 | training loss 0.9790
+step  3050/5000 | training loss 0.9820
+step  3075/5000 | training loss 0.9239
+step  3100/5000 | training loss 0.9890
+step  3125/5000 | training loss 0.9687
+step  3150/5000 | training loss 0.9466
+step  3175/5000 | training loss 0.9690
+step  3200/5000 | training loss 0.9383
+step  3225/5000 | training loss 0.9605
+step  3250/5000 | training loss 0.9324
+-- eval @ step 3250: train 0.8369 | val 1.6381 --
+step  3275/5000 | training loss 0.9260
+step  3300/5000 | training loss 0.9143
+step  3325/5000 | training loss 0.9368
+step  3350/5000 | training loss 0.9284
+step  3375/5000 | training loss 0.9137
+step  3400/5000 | training loss 0.9454
+step  3425/5000 | training loss 0.9098
+step  3450/5000 | training loss 0.9547
+step  3475/5000 | training loss 0.8852
+step  3500/5000 | training loss 0.9670
+-- eval @ step 3500: train 0.7907 | val 1.6729 --
+step  3525/5000 | training loss 0.8904
+step  3550/5000 | training loss 0.9024
+step  3575/5000 | training loss 0.9042
+step  3600/5000 | training loss 0.8915
+step  3625/5000 | training loss 0.8966
+step  3650/5000 | training loss 0.8852
+step  3675/5000 | training loss 0.9015
+step  3700/5000 | training loss 0.8837
+step  3725/5000 | training loss 0.8891
+step  3750/5000 | training loss 0.8840
+-- eval @ step 3750: train 0.7476 | val 1.6746 --
+step  3775/5000 | training loss 0.9054
+step  3800/5000 | training loss 0.8712
+step  3825/5000 | training loss 0.8346
+step  3850/5000 | training loss 0.8658
+step  3875/5000 | training loss 0.8586
+step  3900/5000 | training loss 0.9035
+step  3925/5000 | training loss 0.8509
+step  3950/5000 | training loss 0.8830
+step  3975/5000 | training loss 0.8612
+step  4000/5000 | training loss 0.8654
+-- eval @ step 4000: train 0.7112 | val 1.7285 --
+step  4025/5000 | training loss 0.8494
+step  4050/5000 | training loss 0.8590
+step  4075/5000 | training loss 0.8568
+step  4100/5000 | training loss 0.8396
+step  4125/5000 | training loss 0.8319
+step  4150/5000 | training loss 0.8268
+step  4175/5000 | training loss 0.8367
+step  4200/5000 | training loss 0.8251
+step  4225/5000 | training loss 0.8025
+step  4250/5000 | training loss 0.8223
+-- eval @ step 4250: train 0.6749 | val 1.7610 --
+step  4275/5000 | training loss 0.8717
+step  4300/5000 | training loss 0.8104
+step  4325/5000 | training loss 0.8159
+step  4350/5000 | training loss 0.8334
+step  4375/5000 | training loss 0.8028
+step  4400/5000 | training loss 0.8041
+step  4425/5000 | training loss 0.7847
+step  4450/5000 | training loss 0.7939
+step  4475/5000 | training loss 0.8192
+step  4500/5000 | training loss 0.8084
+-- eval @ step 4500: train 0.6548 | val 1.7891 --
+step  4525/5000 | training loss 0.8176
+step  4550/5000 | training loss 0.8312
+step  4575/5000 | training loss 0.8156
+step  4600/5000 | training loss 0.8114
+step  4625/5000 | training loss 0.7804
+step  4650/5000 | training loss 0.7809
+step  4675/5000 | training loss 0.7933
+step  4700/5000 | training loss 0.8257
+step  4725/5000 | training loss 0.8054
+step  4750/5000 | training loss 0.7809
+-- eval @ step 4750: train 0.6276 | val 1.8055 --
+step  4775/5000 | training loss 0.8125
+step  4800/5000 | training loss 0.7911
+step  4825/5000 | training loss 0.8062
+step  4850/5000 | training loss 0.7913
+step  4875/5000 | training loss 0.7949
+step  4900/5000 | training loss 0.7959
+step  4925/5000 | training loss 0.7803
+step  4950/5000 | training loss 0.7749
+step  4975/5000 | training loss 0.7693
+step  5000/5000 | training loss 0.7760
+-- eval @ step 5000: train 0.6125 | val 1.8253 --
+
+Best val 1.5223 kept; final overfit copy also saved to checkpoints/tinyclaude.pt
+Saved model to checkpoints/tinyclaude.pt. Now run: python chat.py

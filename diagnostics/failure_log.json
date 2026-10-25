@@ -1,0 +1,97 @@
+{
+  "failures": [],
+  "successes": [
+    {
+      "prompt": "What is Apple's current P/E ratio?",
+      "answer": "I do not have access to real-time data, but the current P/E ratio for apple is approximately 180.",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": false,
+      "has_financial_keyword": false,
+      "full_answer": "I do not have access to real-time data, but the current P/E ratio for apple is approximately 180."
+    },
+    {
+      "prompt": "Explain the difference between a bull and bear market.",
+      "answer": "A bull market is a period of rising stock prices, while a bear market is a period of falling stock prices. In a bull market, stock prices generally rise, and prices tend to be relatively stable over t",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": false,
+      "has_financial_keyword": true,
+      "full_answer": "A bull market is a period of rising stock prices, while a bear market is a period of falling stock prices. In a bull market, stock prices generally rise, and prices tend to be relatively stable over time. In a bear market, prices generally fall, and prices tend to be relatively stable over time. During a bull market, investors are generally optimistic about the future of the stock market, and they anticipate that prices will continue to rise. During a bear market, investors are generally pessimistic about the future of the stock market, and they anticipate that prices will continue to fall."
+    },
+    {
+      "prompt": "What does 'dividend yield' mean?",
+      "answer": "The dividend yield is a measure of the amount of income that a company is paying out to shareholders, divided by the current share price. It is used to evaluate the value of a dividend, and can help i",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": false,
+      "has_financial_keyword": true,
+      "full_answer": "The dividend yield is a measure of the amount of income that a company is paying out to shareholders, divided by the current share price. It is used to evaluate the value of a dividend, and can help investors determine whether they are getting a fair return on their investment."
+    },
+    {
+      "prompt": "How does quantitative easing affect stock prices?",
+      "answer": "Quantitative easing (QE) is a monetary policy that involves the central bank purchasing government debt or other securities from the market. This is done to stimulate economic growth and reduce inflat",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": false,
+      "has_financial_keyword": true,
+      "full_answer": "Quantitative easing (QE) is a monetary policy that involves the central bank purchasing government debt or other securities from the market. This is done to stimulate economic growth and reduce inflation. The effect of QE on stock prices is that it may result in an increase in the supply of securities, which could lead to a decrease in the value of existing stocks and an increase in the price of new stocks. This can cause stock prices to fluctuate, as investors react to the new supply of securities and the changing value of existing stocks. However, the effects of QE on stock prices are often short-lived and temporary, as investors quickly adjust their"
+    },
+    {
+      "prompt": "Explain compound interest with an example.",
+      "answer": "Compound interest is the interest earned on an investment that accumulates over time, and it works by multiplying the original amount by a given factor each time the interest is paid or earned. Let's ",
+      "has_numbers": true,
+      "has_defined_term": true,
+      "has_example": true,
+      "has_financial_keyword": true,
+      "full_answer": "Compound interest is the interest earned on an investment that accumulates over time, and it works by multiplying the original amount by a given factor each time the interest is paid or earned. Let's say you have a $10,000 investment that earns 6% interest per year. At the end of the year, the investment would have grown to $10,560. If the same interest rate were to be paid every year, the interest would have grown to $11,790 by the end of the 10th year. This is an example of compound interest."
+    },
+    {
+      "prompt": "What is the Fed funds rate?",
+      "answer": "The Fed funds rate is the interest rate that banks and other lenders charge each other for overnight loans. It is a key factor in determining the interest rates charged by financial institutions for l",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": false,
+      "has_financial_keyword": true,
+      "full_answer": "The Fed funds rate is the interest rate that banks and other lenders charge each other for overnight loans. It is a key factor in determining the interest rates charged by financial institutions for loans and other types of transactions. The Fed sets the federal funds rate, which is the rate at which banks and other lenders offer to lend to each other overnight. The interest rate that banks charge each other for overnight loans is known as the prime rate."
+    },
+    {
+      "prompt": "Define market capitalization.",
+      "answer": "Market capitalization is the total value of a company's outstanding shares. It is calculated by multiplying the total number of shares outstanding by their respective share prices, and then adding up ",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": false,
+      "has_financial_keyword": true,
+      "full_answer": "Market capitalization is the total value of a company's outstanding shares. It is calculated by multiplying the total number of shares outstanding by their respective share prices, and then adding up the total value of those shares."
+    },
+    {
+      "prompt": "How does inflation impact bond prices?",
+      "answer": "Inflation affects bond prices by increasing the cost of issuing and maintaining bonds. As the cost of bonds rises, their yields (the amount of interest earned) decrease, and bond prices fall. This lea",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": false,
+      "has_financial_keyword": true,
+      "full_answer": "Inflation affects bond prices by increasing the cost of issuing and maintaining bonds. As the cost of bonds rises, their yields (the amount of interest earned) decrease, and bond prices fall. This leads to lower interest rates and higher yields, which can be beneficial for investors looking to make money from bonds. However, if inflation is too high, it can lead to a situation where bond prices are too high relative to the risk taken by investors."
+    },
+    {
+      "prompt": "What is a REIT?",
+      "answer": "A REIT (Real Estate Investment Trust) is a type of investment trust that invests in real estate. It is a type of corporation that allows its shareholders to invest in the ownership of real estate prop",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": true,
+      "has_financial_keyword": false,
+      "full_answer": "A REIT (Real Estate Investment Trust) is a type of investment trust that invests in real estate. It is a type of corporation that allows its shareholders to invest in the ownership of real estate properties, which can be used for various purposes such as commercial, residential, or industrial use."
+    },
+    {
+      "prompt": "Explain the 2008 financial crisis in two sentences.",
+      "answer": "The 2008 financial crisis was a global financial crisis that occurred in 2008. It was caused by the collapse of the US subprime mortgage market, which led to a chain of events that led to the bankrupt",
+      "has_numbers": false,
+      "has_defined_term": true,
+      "has_example": false,
+      "has_financial_keyword": true,
+      "full_answer": "The 2008 financial crisis was a global financial crisis that occurred in 2008. It was caused by the collapse of the US subprime mortgage market, which led to a chain of events that led to the bankruptcy of several major financial institutions, including Bear Stearns, Lehman Brothers, and Merrill Lynch."
+    }
+  ],
+  "total": 10,
+  "success_rate": 1.0
+}

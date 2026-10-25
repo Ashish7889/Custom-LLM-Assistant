@@ -1,0 +1,131 @@
+"""
+RAG (Retrieval-Augmented Generation) for financial data.
+
+Uses the existing finance_instructions.jsonl as a knowledge base,
+performs keyword-based retrieval, and augments generation with retrieved context.
+"""
+
+import json
+import re
+from typing import List, Dict, Optional
+
+
+def load_finance_knowledge_base(path: str = "data/finance_instructions.jsonl") -> List[Dict]:
+    """Load the finance instruction dataset as a simple knowledge base."""
+    entries = []
+    try:
+        with open(path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    entries.append(json.loads(line))
+    except FileNotFoundError:
+        print(f"Warning: {path} not found, returning empty knowledge base")
+    return entries
+
+
+def _extract_words(text: str) -> set:
+    """Extract lowercase word tokens from text."""
+    return set(re.findall(r"\b\w+\b", text.lower()))
+
+
+def retrieve_relevant_context(
+    question: str,
+    knowledge_base: List[Dict],
+    top_k: int = 3,
+) -> Optional[str]:
+    """Retrieve the most relevant finance concepts for a question using keyword matching.
+
+    Simple heuristic: score each entry by finance word overlap with the question,
+    return the top-k matching outputs concatenated.
+    """
+    if not knowledge_base:
+        return None
+
+    question_words = _extract_words(question)
+
+    # Finance-related keywords for boosting relevance
+    finance_vocab = {
+        "interest", "compound", "market", "bull", "bear", "dividend",
+        "stock", "bond", "etf", "rate", "inflation", "recession",
+        "portfolio", "risk", "return", "yield", "asset", "liability",
+        "credit", "loan", "mortgage", "insurance", "tax", "capital",
+        "equity", "share", "invest", "sell", "buy", "brokerage",
+    }
+
+    scored = []
+    for entry in knowledge_base:
+        output = entry.get("output", "")
+        out_words = _extract_words(output)
+
+        # Base score: overlap between question words and output words
+        q_out_overlap = len(question_words & out_words)
+
+        # Bonus: how many finance terms appear in output
+        out_finance = len(out_words & finance_vocab)
+
+        # Bonus: how many finance terms appear in question
+        q_finance = len(question_words & finance_vocab)
+
+        # Total score: prefer outputs that contain finance terms matching the question
+        score = q_out_overlap + out_finance + q_finance
+        scored.append((score, entry))
+
+    # Sort by score descending, take top_k
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_entries = [entry for _, entry in scored[:top_k] if scored[0][0] > 0]
+
+    if not top_entries:
+        return None  # No meaningful match found
+
+    # Build context from top entries' outputs
+    contexts = []
+    for entry in top_entries:
+        ctx = entry.get("output", "")[:300]  # truncate each output
+        contexts.append(ctx)
+
+    return " ".join(contexts)
+
+
+def augment_prompt_with_rag(
+    question: str,
+    knowledge_base_path: str = "data/finance_instructions.jsonl",
+    system_prompt: str = "You are a knowledgeable financial assistant.",
+    top_k: int = 3,
+) -> str:
+    """Augment a user question with retrieved financial knowledge.
+
+    Returns the augmented question string that can be used as a user message
+    in the chat template, with context prepended if relevant knowledge was found.
+    """
+
+    knowledge_base = load_finance_knowledge_base(knowledge_base_path)
+    context = retrieve_relevant_context(question, knowledge_base, top_k=top_k)
+
+    if context:
+        augmented_question = f"Context: {context}\n\nQuestion: {question}"
+    else:
+        augmented_question = question
+
+    return augmented_question
+
+
+if __name__ == "__main__":
+    # Quick test
+    questions = [
+        "What is compound interest?",
+        "What is a bull market?",
+        "How do I open a brokerage account?",
+    ]
+
+    kb = load_finance_knowledge_base()
+    print(f"Loaded {len(kb)} finance knowledge entries\n")
+
+    for q in questions:
+        context = retrieve_relevant_context(q, kb, top_k=3)
+        print(f"Q: {q}")
+        if context:
+            print(f"Retrieved context: {context[:300]}...")
+        else:
+            print("No context retrieved")
+        print()

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>local named assistant</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 32px 16px;
+      background: #0f0f0f;
+      color: #e4e4e4;
+    }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    p { color: #888; margin-top: 0; }
+    #box {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 12px;
+      height: 420px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    #box .user { color: #7fc8ff; }
+    #box .assistant { color: #cfb2ff; }
+    #box .other { color: #bbb; }
+    #row { margin-top: 12px; display: flex; gap: 8px; }
+    input {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #111;
+      color: #f5f5f5;
+      font-size: 15px;
+    }
+    input:focus { outline: none; border-color: #5a5a5a; }
+    button {
+      padding: 10px 18px;
+      border-radius: 6px;
+      border: none;
+      background: #233; color: #eee; cursor: pointer;
+    }
+    button:hover { background: #344; }
+    #spinner { display: none; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>local assistant</h1>
+  <p>opens http://localhost:5000/chat — no internet required after model cached.</p>
+  <div id="box"></div>
+  <div style="margin-top:8px; color:#666;" id="spinner">waiting…</div>
+  <div id="row">
+    <input id="in" placeholder="your question" autocomplete="off">
+    <button id="send">send</button>
+  </div>
+  <script>
+    const box = document.getElementById('box');
+    const row = document.getElementById('in');
+    const btn = document.getElementById('send');
+    const spin = document.getElementById('spinner');
+
+    function push(tag, text) {
+      const d = document.createElement('div');
+      d.className = tag;
+      d.textContent = text;
+      box.appendChild(d);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function post(text) {
+      row.disabled = true; btn.disabled = true;
+      push('user', text);
+      spin.style.display = 'block';
+      fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: text })
+      }).then(r => r.json())
+       .then(data => {
+         spin.style.display = 'none';
+         if (data.error) { push('other', data.error); }
+         else { push('assistant', data.answer); }
+       })
+       .catch(err => { spin.style.display = 'none'; push('other', err.message); })
+       .finally(() => { row.disabled = false; btn.disabled = false; row.focus(); });
+    }
+
+    btn.addEventListener('click', () => {
+      const t = row.value.trim();
+      if (!t) return;
+      post(t); row.value = '';
+    });
+    row.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { btn.click(); }
+    });
+  </script>
+</body>
+</html>
