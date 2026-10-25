@@ -25,66 +25,83 @@ def load_finance_knowledge_base(path: str = "data/finance_instructions.jsonl") -
 
 
 def _extract_words(text: str) -> set:
-    """Extract lowercase word tokens from text."""
-    return set(re.findall(r"\b\w+\b", text.lower()))
+    """Extract lowercase content words, filtering out common stop words."""
+    stop_words = {
+        "what", "is", "the", "of", "in", "a", "an", "was", "for", "and", "to",
+        "how", "does", "do", "are", "by", "that", "this", "it", "with", "from",
+        "at", "or", "as", "be", "on", "your", "my", "our", "tell", "me", "about",
+        "who", "can", "you", "i", "he", "she", "they", "we", "no", "noo", "yes",
+        "not", "u", "ur", "gave", "wrong", "answer"
+    }
+    words = set(re.findall(r"\b\w+\b", text.lower()))
+    return words - stop_words
 
 
 def retrieve_relevant_context(
     question: str,
     knowledge_base: List[Dict],
-    top_k: int = 3,
+    top_k: int = 2,
+    min_score: int = 2,
 ) -> Optional[str]:
-    """Retrieve the most relevant finance concepts for a question using keyword matching.
-
-    Simple heuristic: score each entry by finance word overlap with the question,
-    return the top-k matching outputs concatenated.
+    """Retrieve verified financial concepts adhering to ECC RAG quality standards:
+    - Pruned relevance matching (no noisy fallback chunks)
+    - Instruction and output term overlap
+    - Source attribution tagging
     """
     if not knowledge_base:
         return None
 
     question_words = _extract_words(question)
+    if not question_words:
+        return None
 
-    # Finance-related keywords for boosting relevance
+    # Core finance terminology
     finance_vocab = {
         "interest", "compound", "market", "bull", "bear", "dividend",
         "stock", "bond", "etf", "rate", "inflation", "recession",
         "portfolio", "risk", "return", "yield", "asset", "liability",
         "credit", "loan", "mortgage", "insurance", "tax", "capital",
-        "equity", "share", "invest", "sell", "buy", "brokerage",
+        "equity", "share", "invest", "sell", "buy", "brokerage", "pe",
+        "order", "limit", "reit", "401k", "ira", "sec", "insider"
     }
 
     scored = []
     for entry in knowledge_base:
+        instruction = entry.get("instruction", "")
         output = entry.get("output", "")
+        
+        instr_words = _extract_words(instruction)
         out_words = _extract_words(output)
 
-        # Base score: overlap between question words and output words
-        q_out_overlap = len(question_words & out_words)
+        # High priority: overlap with the specific concept instruction
+        instr_overlap = len(question_words & instr_words)
+        out_overlap = len(question_words & out_words)
 
-        # Bonus: how many finance terms appear in output
-        out_finance = len(out_words & finance_vocab)
+        # Direct overlap is mandatory (prevent hallucinated topical matches)
+        direct_matches = (instr_overlap * 3) + out_overlap
+        if direct_matches < min_score:
+            continue
 
-        # Bonus: how many finance terms appear in question
-        q_finance = len(question_words & finance_vocab)
+        # Topic relevance boost
+        finance_boost = len(question_words & out_words & finance_vocab)
+        total_score = direct_matches + (finance_boost * 2)
 
-        # Total score: prefer outputs that contain finance terms matching the question
-        score = q_out_overlap + out_finance + q_finance
-        scored.append((score, entry))
+        scored.append((total_score, entry))
 
-    # Sort by score descending, take top_k
+    if not scored:
+        return None  # ECC rule: Return None rather than irrelevant chunks
+
     scored.sort(key=lambda x: x[0], reverse=True)
-    top_entries = [entry for _, entry in scored[:top_k] if scored[0][0] > 0]
+    top_entries = [entry for _, entry in scored[:top_k]]
 
-    if not top_entries:
-        return None  # No meaningful match found
-
-    # Build context from top entries' outputs
+    # Format with citation attribution
     contexts = []
     for entry in top_entries:
-        ctx = entry.get("output", "")[:300]  # truncate each output
-        contexts.append(ctx)
+        title = entry.get("instruction", "Financial Knowledge")
+        content = entry.get("output", "").strip()
+        contexts.append(f"[Verified Source: {title}]\n{content}")
 
-    return " ".join(contexts)
+    return "\n\n".join(contexts)
 
 
 def augment_prompt_with_rag(

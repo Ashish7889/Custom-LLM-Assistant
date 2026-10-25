@@ -1,74 +1,132 @@
 """
-server.py -- a local web chat that runs your LoRA assistant.
+server.py -- Production-grade web server for the Financial Assistant.
 
-Start it from your project folder and open http://localhost:5000 in a browser.
-
-    python server.py
-
-Two things run on http://localhost:5000:
-
-1. The HTML page ./localpage.html (file at the project root) — a plain browser
-   chat box. Type a question, press Enter, the page fetches /chat.
-2. The /chat endpoint (returned as the page's /chat response) — takes
-   the user text, runs the fine-tuned assistant, and returns the generated answer.
-
-No internet needed after the first download — TinyLlama is cached locally.
+Features:
+- Real-time Server-Sent Events (SSE) token streaming at /chat/stream
+- Live market tool execution & RAG status badges
+- User portfolio inspection and management endpoints
+- Dynamic hardware/model status check
+- Static frontend delivery for localpage.html
 """
+
+import json
 import os
-
 import torch
-from peft import PeftModel
-from flask import Flask, jsonify, render_template, request
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from flask import Flask, Response, jsonify, request, stream_with_context
+from agent_engine import FinancialAgentEngine
 
-BASE_MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-ADAPTER = "finetune/adapter"
-
-SYSTEM = "You are a helpful, friendly assistant."
-GEN_KW = dict(max_length=None, do_sample=True, temperature=0.7, top_p=0.9,
-              pad_token_id=None, eos_token_id=None, min_length=0, use_cache=True)
-
-app = Flask(__name__)
-_model = None
-_tokenizer = None
-
-
-def run(user_text):
-    global _model, _tokenizer
-    if _model is None:
-        tok = AutoTokenizer.from_pretrained(BASE_MODEL)
-        mdl = AutoModelForCausalLM.from_pretrained(
-            BASE_MODEL, torch_dtype=torch.bfloat16).to("cuda")
-        _model = PeftModel.from_pretrained(mdl, ADAPTER)
-        _model.eval()
-        _tokenizer = tok
-    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user_text}]
-    text = _tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    ids = _tokenizer(text, add_special_tokens=False, return_tensors="pt").input_ids.to("cuda")
-    mask = (ids != _tokenizer.pad_token_id).long()
-    GEN_KW["max_length"] = ids.shape[1] + 300
-    out = _model.generate(ids, attention_mask=mask, **GEN_KW)
-    answer = _tokenizer.decode(out[0, ids.shape[1]:], skip_special_tokens=True).strip()
-    return answer
+app = Flask(__name__, static_folder=None)
+engine = FinancialAgentEngine()
 
 
 @app.route("/")
 def index():
-    with open(os.path.join(app.root_path, "localpage.html"), encoding="utf-8") as f:
-        template = f.read()
-    return template
+    """Serve the local assistant interface."""
+    path = os.path.join(app.root_path, "localpage.html")
+    with open(path, encoding="utf-8") as f:
+        return f.read(), 200, {"Content-Type": "text/html; charset=utf-8"}
+
+
+@app.route("/api/status", methods=["GET"])
+def status():
+    """Return backend device and engine status."""
+    device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
+    return jsonify({
+        "status": "ready",
+        "device": str(engine.device),
+        "device_name": device_name,
+        "adapter": engine.adapter_path,
+        "portfolio_count": len(engine.memory.portfolio),
+        "discussed_tickers": list(engine.memory.discussed_tickers),
+    })
 
 
 @app.route("/chat", methods=["POST"])
-def chat():
+def chat_sync():
+    """Backward-compatible synchronous chat endpoint."""
     body = request.get_json(silent=True) or {}
-    user_text = (body.get("prompt") or "").strip()
-    if not user_text:
-        return jsonify({"error": "no prompt"}), 400
-    answer = run(user_text)
-    return jsonify({"answer": answer})
+    prompt = (body.get("prompt") or "").strip()
+    if not prompt:
+        return jsonify({"error": "No prompt provided"}), 400
+
+    try:
+        response = engine.chat(prompt)
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/chat/stream", methods=["GET", "POST"])
+def chat_stream():
+    """SSE streaming endpoint for real-time tokens and tool events."""
+    if request.method == "POST":
+        body = request.get_json(silent=True) or {}
+        prompt = (body.get("prompt") or "").strip()
+    else:
+        prompt = (request.args.get("prompt") or "").strip()
+
+    if not prompt:
+        return jsonify({"error": "No prompt provided"}), 400
+
+    def generate_events():
+        try:
+            for event in engine.stream_chat(prompt):
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as e:
+            err_event = {"type": "error", "message": str(e)}
+            yield f"data: {json.dumps(err_event)}\n\n"
+
+    return Response(
+        stream_with_context(generate_events()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@app.route("/api/portfolio", methods=["GET", "POST"])
+def manage_portfolio():
+    """Inspect or update the user portfolio."""
+    if request.method == "POST":
+        body = request.get_json(silent=True) or {}
+        ticker = (body.get("ticker") or "").upper().strip()
+        shares = float(body.get("shares") or 0)
+        cost_basis = float(body.get("cost_basis") or 0)
+
+        if not ticker or shares <= 0:
+            return jsonify({"error": "Invalid ticker or shares"}), 400
+
+        engine.memory.add_to_portfolio(ticker, shares, cost_basis)
+        return jsonify({
+            "success": True,
+            "portfolio": engine.memory.portfolio,
+            "summary": engine.memory.get_portfolio_summary(),
+        })
+
+    return jsonify({
+        "portfolio": engine.memory.portfolio,
+        "summary": engine.memory.get_portfolio_summary(),
+        "discussed_tickers": sorted(list(engine.memory.discussed_tickers)),
+        "risk_tolerance": engine.memory.risk_tolerance,
+    })
+
+
+@app.route("/api/reset", methods=["POST"])
+def reset_conversation():
+    """Reset chat history and start a fresh session."""
+    engine.memory.history = []
+    engine.memory.discussed_tickers = set()
+    engine.memory._save()
+    return jsonify({"success": True, "message": "Conversation history cleared."})
 
 
 if __name__ == "__main__":
-    print("Server starting on http://localhost:5000 — open it in a browser.")
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    print("=" * 64)
+    print("  Custom Financial LLM Assistant Server")
+    print("  Status: Ready on http://localhost:5000")
+    print("  Device:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
+    print("=" * 64)
+    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)

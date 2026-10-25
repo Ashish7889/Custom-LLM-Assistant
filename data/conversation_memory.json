@@ -1,0 +1,35 @@
+{
+  "user_id": "default_user",
+  "history": [
+    {
+      "role": "user",
+      "content": "/help"
+    },
+    {
+      "role": "assistant",
+      "content": "### \u26a1 Available ECC Agent Skills & Commands\n\n- **/stock `<ticker>`**: Fetch live real-time price & trading volume.\n- **/metrics `<ticker>`**: Inspect P/E ratio, market cap, and profit margins.\n- **/portfolio**: View your tracked portfolio holdings and average cost basis.\n- **/audit**: Run a portfolio concentration, risk, and compliance audit.\n- **/plan `<goal>`**: Formulate a structured step-by-step financial plan.\n- **/clear**: Reset the session history and active ticker memory.\n"
+    },
+    {
+      "role": "user",
+      "content": "/help"
+    },
+    {
+      "role": "assistant",
+      "content": "### \u26a1 Available ECC Agent Skills & Commands\n\n- **/stock `<ticker>`**: Fetch live real-time price & trading volume.\n- **/metrics `<ticker>`**: Inspect P/E ratio, market cap, and profit margins.\n- **/portfolio**: View your tracked portfolio holdings and average cost basis.\n- **/audit**: Run a portfolio concentration, risk, and compliance audit.\n- **/plan `<goal>`**: Formulate a structured step-by-step financial plan.\n- **/clear**: Reset the session history and active ticker memory.\n"
+    },
+    {
+      "role": "user",
+      "content": "/stock MSFT"
+    },
+    {
+      "role": "assistant",
+      "content": "MSFT: $524.51 USD (as of N/A)"
+    }
+  ],
+  "portfolio": {},
+  "risk_tolerance": "moderate",
+  "discussed_tickers": [
+    "AAPL"
+  ],
+  "last_topic": "What is the current stock price and PE ratio of AAPL?"
+}

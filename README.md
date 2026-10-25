@@ -1,224 +1,107 @@
-# Custom LLM Assistant - Financial Edition
+# FinSage: Evidence-Grounded Financial Intelligence Assistant
 
-A comprehensive 10-step financial large language model roadmap implementation, ranging from basic financial Q&A to a production-ready financial assistant with retrieval, tool calling, memory, and evaluation.
+FinSage is a small-model financial assistant built for factual evidence-grounding, self-verification, and strict abstention when unverified.
 
-## 📁 Project Structure
+**Hardware Target:** 6GB Laptop GPU (e.g., NVIDIA GeForce RTX 3060).  
+**Default Budget:** Zero.  
+**Core Rule:** The LLM does *not* plan or invent numbers; deterministic code drives the state machine and exact Python arithmetic drives calculations.
 
-```text
-my-project/
-├── model.py              # 10.7M-param GPT transformer from scratch
-├── tokenizer.py          # Character-level tokenizer
-├── data.py               # Shakespeare corpus downloader → train.bin/val.bin
-├── train.py              # Training loop (5000 steps on Shakespeare)
-├── chat.py               # Interactive chat with base model
-├── README.md             # This file
-├── finetune/
-│   ├── train.py          # LoRA fine-tuning (TinyLlama → assistant)
-│   ├── chat.py           # Q&A chat with LoRA adapter
-│   └── adapter/          # Trained LoRA weights (~60 MB)
-├── finetune_finance/     # Finance roadmap implementation (Steps 1-10)
-│   └── train.py          # LoRA finance fine-tuning framework
-├── diagnostics/          # Step 1 outputs
-│   ├── failure_log.json
-│   └── diagnostics_report.md
-├── data/
-│   ├── input.txt         # Shakespeare text
-│   ├── train.bin, val.bin
-│   ├── finance_instructions.jsonl  # 26 finance concepts
-│   └── finance_template.jsonl      # Chat-formatted finance Q&A
-├── evaluation/           # Steps 5-10 outputs
-│   ├── evaluate_finance.py
-│   ├── benchmark_finance.py
-│   └── benchmark_report.json
-├── localpage.html        # Browser UI for localhost chat
-├── fix_repetition.py     # Repetitive footer trimming + guardrails
-├── rag_finance.py        # RAG financial document retrieval
-├── tool_calling.py       # Stock price, financial metrics, ticker search
-├── conversation_memory.py# Persistent chat history, portfolio, risk tolerance
-└── evaluate_finance.py   # Validation metrics framework
+---
+
+## 🔒 Non-Negotiable Principles
+
+1. **Evidence & Truth:** Facts come strictly from verified sources or tools; math runs in verified Python functions. The model *never* invents numbers.
+2. **Untrusted Data Isolation:** All retrieved text (web, documents, voice transcripts) is treated as untrusted *DATA*. It can never issue system instructions or invoke tools.
+3. **No Simulated Quotes:** Real-time data uses `yfinance` with TTL caching; network or ticker failures yield explicit errors, never fabricated prices.
+4. **Self-Verification & Abstention:** Responses are parsed into structured JSON claims and verified for numerical grounding and citation validity before reaching the user. If unverified, FinSage abstains.
+5. **Regulatory Compliance:** Educational and explanatory only. Never provides personalized investment advice (no buy/sell mandates).
+
+---
+
+## 🏛️ System Architecture
+
+```
+[ User Input / Audio / File ]
+             │
+             ▼
+     ┌───────────────┐
+     │  FastAPI API  │ ◄── Rate limiting, CORS, SSE streaming
+     └───────┬───────┘
+             ▼
+┌─────────────────────────┐
+│ Orchestrator Machine    │ ◄── Explicit deterministic transitions
+│                         │
+│  [INGEST]               │ ──> MIME verification, chunking (300-500 words)
+│     │                   │
+│  [ROUTE]                │ ──> Decisions Layer: decide(task, state, options)
+│     │                   │
+│  [RETRIEVE | TOOL]      │ ──> BM25 + Embeddings / Safe Python Calculator / yfinance
+│     │                   │
+│  [GENERATE]             │ ──> Constrained Grammar JSON: {"abstain": bool, "sentences": [...]}
+│     │                   │
+│  [VERIFY]               │ ──> Verify numbers ∈ sources, check cites, NLI claim support
+│     │                   │
+│  (Fail -> REPAIR <= 2)  │ ──> Targeted error feedback to generator
+│     │                   │
+│  [RESPOND | ABSTAIN]    │ ──> Return verified answer with confidence or structured abstention
+└─────────────────────────┘
 ```
 
-## 🚀 Quick Start
+---
 
-### 1. Prerequisites
+## 🚀 Roadmap & Implementation Status
 
-- Python 3.8+
-- Git
-- Optional: CUDA-enabled GPU for faster inference
+| Phase | Milestone | Status | Description |
+| :--- | :--- | :---: | :--- |
+| **Phase 0** | **Cleanup & Repo Architecture** | ✅ **Complete** | Truthful docs, typed configuration, and decoupled module tree. |
+| **Phase 1** | **Orchestrator + API + UI** | ✅ **Complete** | Explicit deterministic state machine, FastAPI SSE `/chat`, decision engine, modern responsive UI. |
+| **Phase 2** | **Ingest & Hybrid Retrieval** | ✅ **Complete** | PDF/DOCX/TXT parsers, magic byte validation, BM25 scoring, and isolated user document store. |
+| **Phase 3** | **Verifier & Abstain Path** | ✅ **Complete** | Strict numerical containment (`numbers ⊆ sources ∪ tools`), citation verification, and auto-repair loop. |
+| **Phase 4** | **Personal CA Tools & Debt Planner** | ✅ **Complete** | Budget 2024–25 Old vs New Tax Regime, Section 87A ₹0 rebate up to ₹7.75L, ITR form selector, and Newton-Raphson flat vs reducing APR solver. |
+| **Phase 5** | **Voice Audio & Natural Dialogue** | ✅ **Complete** | Web Speech API microphone STT (`en-IN`), browser voice TTS readout, and multi-turn pronoun context resolution. |
+| **Phase 6** | **Test Suite & Verification** | ✅ **Complete** | 33 comprehensive unit and integration tests covering tools, verifier, API, and state machine transitions. |
+| **Phase 7** | **Personal CA SFT Fine-Tuning** | ✅ **Complete** | 1,330 curated tax/scheme triplets; TinyLlama-1.1B trained on RTX 3060 GPU with LoRA rank 32, loss converging to 0.3895. |
 
-### 2. Install Dependencies
+---
 
+## 🇮🇳 Personal AI Chartered Accountant Capabilities
+
+1. **Indian Income Tax Optimization (Budget 2024–25)**:
+   - Compares Old vs New Tax Regime with ₹75,000 standard deduction for salaried individuals.
+   - Accurately computes Section 87A rebate guaranteeing **₹0 tax** on taxable income up to ₹7,00,000 (gross up to ₹7,75,000 for salaried).
+   - Automatically suggests the correct ITR form: `ITR-1 (Sahaj)` for salaried citizens, `ITR-4 (Sugam)` for gig workers, shopkeepers, and small businesses.
+
+2. **Predatory Debt Trap Prevention & Prepayment**:
+   - Newton-Raphson effective reducing APR solver exposing predatory loan tricks (e.g. 12% flat rate = 21.46% reducing APR).
+   - Prepayment impact calculator showing exact months shaved and total interest saved.
+
+3. **Government Welfare Scheme Intelligence**:
+   - Official guidance for PM-KISAN, Ayushman Bharat, Atal Pension Yojana (APY), and Sukanya Samriddhi Yojana (SSY).
+
+4. **Multi-Turn Context & Natural Speech**:
+   - Resolves follow-up pronouns (*"who can apply to it"*, *"what are the eligibility criteria"*) without false abstentions.
+   - Interactive voice input (`🎤`) and spoken voice readout (`🔊`) with Indian English cadence.
+
+---
+
+## 🛠️ Quick Start
+
+### 1. Requirements
+- Python 3.10+
+- PyTorch with CUDA (6GB VRAM recommended, e.g. NVIDIA RTX 3060)
+- Install dependencies:
+  ```bash
+  pip install fastapi uvicorn pydantic pytest sse-starlette yfinance transformers peft bitsandbytes
+  ```
+
+### 2. Run Test Suite
 ```bash
-pip install torch transformers peft yfinance numpy
+python -m pytest tests/ -v
 ```
+*(All 33 tests pass in ~100s)*
 
-### 3. Run the LocalChat Server
-
+### 3. Launch FinSage
 ```bash
-python server.py
+python -m uvicorn api.app:app --host 127.0.0.1 --port 8000
 ```
-
-Then open http://localhost:5000 in your browser.
-
-### 4. Or Run Directly with Python
-
-```bash
-python chat.py
-```
-
-## 🛠️ Available Commands
-
-| Command | Description |
-|---------|-------------|
-| `python server.py` | Start Flask dev server on http://localhost:5000 |
-| `python rag_finance.py` | Test RAG financial document retrieval |
-| `python tool_calling.py` | Test stock price and financial metrics lookups |
-| `python conversation_memory.py` | Test conversation memory functionality |
-| `python benchmark_finance.py` | Run evaluation benchmark suite |
-| `python evaluate_finance.py` | Run financial validation metrics |
-
-## 📋 10-Step Roadmap Status
-
-| Step | Title | Status |
-|------|-------|--------|
-| 1 | Diagnose generation failures on financial queries | ✅ Complete |
-| 2 | Build clean financial instruction dataset | ✅ Complete |
-| 3 | Improve financial chat template system | ✅ Complete |
-| 4 | Improve LoRA fine-tuning for finance | ✅ Complete |
-| 5 | Add validation/evaluation with financial metrics | ✅ Complete |
-| 6 | Fix repetition / EOS for financial text | ✅ Complete |
-| 7 | Add RAG with financial document retrieval | ✅ Complete |
-| 8 | Add tool calling (stock/lookup) | ✅ Complete |
-| 9 | Add conversation memory for finance | ✅ Complete |
-| 10 | Benchmark against baseline financial models | ✅ Complete |
-
-## 🔧 Production Deployment
-
-### Docker Deployment (Optional)
-
-```dockerfile
-FROM python:3.10-slim
-
-WORKDIR /app
-COPY . /app
-
-RUN pip install --no-cache-dir torch transformers peft yfinance numpy flask
-
-EXPOSE 5000
-CMD ["python", "server.py"]
-```
-
-Build and run:
-
-```bash
-docker build -t custom-llm-assistant .
-docker run -p 5000:5000 custom-llm-assistant
-```
-
-### Environment Variables
-
-Create a `.env` file if needed:
-
-```bash
-# HF_TOKEN for higher rate limits on Hugging Face
-HF_TOKEN=your_hf_token_here
-```
-
-## 📊 Model Information
-
-- **Base Model**: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (1.1B parameters)
-- **Fine-tuning**: LoRA (Low-Rank Adaptation) with rank 16
-- **Parameters**: ~10.7M base model, ~2.25M LoRA parameters (0.20% of total)
-- **Tokenizer**: Character-level tokenizer
-- **Context Window**: Standard LLM context
-
-## 💡 Usage Examples
-
-### Financial Q&A
-
-```python
-from fix_repetition import generate_financial_answer
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-tok = AutoTokenizer.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
-mdl = AutoModelForCausalLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0", torch_dtype="bfloat16").to("cuda")
-
-answer = generate_financial_answer(mdl, tok, "What is compound interest?")
-print(answer)
-```
-
-### Stock Price Lookup
-
-```python
-from tool_calling import get_stock_price, format_tool_result
-
-result = get_stock_price("AAPL")
-print(format_tool_result("get_stock_price", result))
-```
-
-### RAG with Financial Context
-
-```python
-from rag_finance import augment_prompt_with_rag
-
-augmented = augment_prompt_with_rag("What is a bull market?")
-print(augmented)  # Includes retrieved context from knowledge base
-```
-
-### Conversation Memory
-
-```python
-from conversation_memory import FinanceMemory
-
-mem = FinanceMemory(user_id="user123")
-mem.add_message("user", "What do you think about AAPL?")
-mem.add_to_portfolio("AAPL", 10, 185.0)
-mem.add_message("user", "How has it performed?")
-summary = mem.get_summary()
-```
-
-## 🧪 Evaluation
-
-Run the full benchmark suite:
-
-```bash
-python benchmark_finance.py
-```
-
-Results saved to `evaluation/benchmark_report.json` with metrics on:
-
-- Factual accuracy on financial concepts
-- Number/percentage extraction
-- Ticker symbol recognition
-
-## 📈 Roadmap Progress
-
-The project implements all 10 steps of the financial assistant progression:
-
-1. **Foundation**: Diagnosed generation failures, built clean instruction dataset
-2. **Template System**: Improved chat formatting with system prompts
-3. **Fine-tuning**: LoRA framework for financial adaptation
-4. **Evaluation**: Metrics framework for factual accuracy, numbers, tickers
-5. **Repair**: Repetitive footer trimming and EOS behavior fixes
-6. **RAG**: Keyword-based financial document retrieval
-7. **Tools**: Stock price, financial metrics, ticker search
-8. **Memory**: Persistent history, portfolio tracking, risk tolerance
-9. **Benchmarking**: Comparison against baseline models
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/improvement`)
-3. Commit your changes (`git commit -m "Add some improvement"`)
-4. Push to the branch (`git push origin feature/improvement`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is open source. See the repository for license details.
-
-## 🆘 Need Help?
-
-- Check the `diagnostics/` folder for troubleshooting common issues
-- Review `evaluation/` for benchmark results and metrics
-- Open an issue in the GitHub repository for bug reports or feature requests
+Open **`http://127.0.0.1:8000/`** to interact with FinSage via text, microphone voice input, or audio readout.

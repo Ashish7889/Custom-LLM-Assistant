@@ -2,101 +2,930 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>local named assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Financial Intelligence | Custom LLM Assistant</title>
+  
+  <!-- Modern Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Marked.js for fast Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 32px 16px;
-      background: #0f0f0f;
-      color: #e4e4e4;
+    :root {
+      --bg-base: #090a0f;
+      --bg-surface: #10121a;
+      --bg-surface-elevated: #171b26;
+      --bg-glass: rgba(18, 22, 33, 0.75);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(99, 102, 241, 0.5);
+      
+      --accent-primary: #6366f1;
+      --accent-primary-hover: #4f46e5;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --accent-finance: #10b981;
+      --accent-finance-glow: rgba(16, 185, 129, 0.2);
+      --accent-amber: #f59e0b;
+      
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
-    h1 { font-size: 22px; margin-bottom: 4px; }
-    p { color: #888; margin-top: 0; }
-    #box {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 6px;
-      padding: 12px;
-      height: 420px;
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.08), transparent 35%),
+        radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.05), transparent 40%);
+    }
+
+    /* Top Navigation */
+    header {
+      height: 64px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 20;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-primary), #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #34d399;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.5; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 0.5; transform: scale(0.9); }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Main Container Layout */
+    .app-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Chat Area */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      height: 100%;
+    }
+
+    .messages-area {
+      flex: 1;
       overflow-y: auto;
-      white-space: pre-wrap;
+      padding: 24px 32px 140px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      scroll-behavior: smooth;
+    }
+
+    .message-row {
+      display: flex;
+      gap: 16px;
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-row.user {
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .avatar.assistant {
+      background: linear-gradient(135deg, var(--accent-primary), #a855f7);
+      color: white;
+      box-shadow: 0 2px 10px var(--accent-glow);
+    }
+
+    .avatar.user {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    .message-content {
+      max-width: 85%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bubble {
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      font-size: 14.5px;
+      line-height: 1.6;
       word-break: break-word;
     }
-    #box .user { color: #7fc8ff; }
-    #box .assistant { color: #cfb2ff; }
-    #box .other { color: #bbb; }
-    #row { margin-top: 12px; display: flex; gap: 8px; }
-    input {
+
+    .message-row.user .bubble {
+      background: #1e2230;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-row.assistant .bubble {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Markdown inside assistant messages */
+    .bubble p { margin-bottom: 10px; }
+    .bubble p:last-child { margin-bottom: 0; }
+    .bubble code {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #a5b4fc;
+    }
+    .bubble pre {
+      background: #0d0f17;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+      border: 1px solid var(--border-subtle);
+    }
+    .bubble ul, .bubble ol {
+      margin-left: 20px;
+      margin-bottom: 10px;
+    }
+    .bubble strong {
+      color: #fff;
+    }
+
+    /* Live Tool & Status Cards */
+    .event-card {
+      background: rgba(18, 22, 33, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--accent-primary);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .event-card.tool {
+      border-left-color: var(--accent-finance);
+      background: rgba(16, 185, 129, 0.06);
+    }
+
+    .event-card.rag {
+      border-left-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.06);
+    }
+
+    .event-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tool .event-badge {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    .rag .event-badge {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+    }
+
+    .event-text {
+      color: var(--text-muted);
       flex: 1;
-      padding: 10px 12px;
-      border-radius: 6px;
-      border: 1px solid #333;
-      background: #111;
-      color: #f5f5f5;
-      font-size: 15px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    input:focus { outline: none; border-color: #5a5a5a; }
-    button {
-      padding: 10px 18px;
-      border-radius: 6px;
+
+    /* Blinking Cursor for Streaming */
+    .stream-cursor {
+      display: inline-block;
+      width: 7px;
+      height: 15px;
+      background: var(--accent-primary);
+      margin-left: 3px;
+      vertical-align: middle;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Input Dock */
+    .input-dock {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, var(--bg-base) 70%, transparent);
+      padding: 16px 32px 28px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .input-box-wrapper {
+      max-width: 860px;
+      width: 100%;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 8px 12px 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      transition: all 0.2s ease;
+    }
+
+    .input-box-wrapper:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow), 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .input-box-wrapper textarea {
+      flex: 1;
+      background: transparent;
       border: none;
-      background: #233; color: #eee; cursor: pointer;
+      color: #fff;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      resize: none;
+      height: 24px;
+      max-height: 140px;
+      outline: none;
+      line-height: 1.5;
     }
-    button:hover { background: #344; }
-    #spinner { display: none; color: #666; }
+
+    .input-box-wrapper textarea::placeholder {
+      color: var(--text-dim);
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--accent-primary);
+      border: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background: var(--accent-primary-hover);
+      transform: scale(1.04);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Prompt Chips */
+    .quick-chips {
+      max-width: 860px;
+      width: 100%;
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background: rgba(99, 102, 241, 0.12);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #c7d2fe;
+    }
+
+    /* Right Sidebar - Portfolio & Memory */
+    .sidebar {
+      width: 320px;
+      border-left: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      z-index: 15;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--text-muted);
+    }
+
+    .sidebar-content {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .widget-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+
+    .widget-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .holding-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .holding-item:last-child {
+      border-bottom: none;
+    }
+
+    .holding-ticker {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .holding-details {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .ticker-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin: 3px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    .empty-icon {
+      font-size: 42px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 12px var(--accent-glow));
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .messages-area { padding: 16px; }
+      .input-dock { padding: 12px 16px 20px 16px; }
+    }
   </style>
 </head>
 <body>
-  <h1>local assistant</h1>
-  <p>opens http://localhost:5000/chat — no internet required after model cached.</p>
-  <div id="box"></div>
-  <div style="margin-top:8px; color:#666;" id="spinner">waiting…</div>
-  <div id="row">
-    <input id="in" placeholder="your question" autocomplete="off">
-    <button id="send">send</button>
+
+  <!-- Top Header Navigation -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-logo">✦</div>
+      <div>
+        <div class="brand-title">Aura Financial Intelligence</div>
+        <div class="brand-subtitle">TinyLlama-1.1B • LoRA Adapter • Autonomous Tools</div>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <div class="status-badge" id="hwBadge">
+        <div class="status-dot"></div>
+        <span id="hwText">Connecting...</span>
+      </div>
+      <button class="btn-secondary" id="resetBtn" title="Clear conversation history">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M3 21v-5h5"/>
+        </svg>
+        New Session
+      </button>
+    </div>
+  </header>
+
+  <!-- App Layout -->
+  <div class="app-layout">
+    
+    <!-- Chat Area -->
+    <main class="chat-container">
+      <div class="messages-area" id="chatArea">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">📈</div>
+          <div class="empty-title">Welcome to your Financial Assistant</div>
+          <div class="empty-desc">
+            Equipped with real-time market data lookups (Yahoo Finance), conceptual RAG retrieval, portfolio tracking, and regulatory guardrails.
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Input Dock -->
+      <div class="input-dock">
+        <div class="input-box-wrapper">
+          <textarea id="promptInput" rows="1" placeholder="Ask about stocks, valuation metrics, or finance concepts..."></textarea>
+          <button class="send-btn" id="sendBtn" title="Send (Enter)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+
+        <div class="quick-chips">
+          <div class="chip" data-prompt="What is Apple's current stock price and P/E ratio?">🍏 Apple stock & metrics</div>
+          <div class="chip" data-prompt="Explain compound interest with a practical example.">💡 Compound interest</div>
+          <div class="chip" data-prompt="What is a bull market vs bear market?">🐂 Bull vs Bear market</div>
+          <div class="chip" data-prompt="I bought 15 shares of NVDA at 115">💼 Add 15 NVDA to portfolio</div>
+          <div class="chip" data-prompt="What is a limit order?">⚡ Limit orders</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar: Portfolio & State -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Portfolio & Memory</span>
+      </div>
+      <div class="sidebar-content">
+        <div class="widget-card">
+          <div class="widget-title">Your Tracked Holdings</div>
+          <div id="holdingsList">
+            <div style="font-size: 13px; color: var(--text-dim); text-align: center; padding: 12px 0;">
+              No holdings recorded yet.<br>Try saying: <em>"Bought 10 AAPL at 180"</em>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget-card">
+          <div class="widget-title">Active Market Context</div>
+          <div id="discussedTickers">
+            <span style="font-size: 12px; color: var(--text-dim);">No tickers active</span>
+          </div>
+        </div>
+
+        <div class="widget-card" style="font-size: 11.5px; color: var(--text-dim); line-height: 1.6;">
+          <strong style="color: var(--text-muted);">Compliance & Safety:</strong><br>
+          Automated guardrails filter speculative financial advice and format answers to educational compliance standards.
+        </div>
+      </div>
+    </aside>
+
   </div>
+
   <script>
-    const box = document.getElementById('box');
-    const row = document.getElementById('in');
-    const btn = document.getElementById('send');
-    const spin = document.getElementById('spinner');
+    const chatArea = document.getElementById('chatArea');
+    const promptInput = document.getElementById('promptInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const emptyState = document.getElementById('emptyState');
+    const hwBadge = document.getElementById('hwBadge');
+    const hwText = document.getElementById('hwText');
+    const holdingsList = document.getElementById('holdingsList');
+    const discussedTickers = document.getElementById('discussedTickers');
+    const resetBtn = document.getElementById('resetBtn');
 
-    function push(tag, text) {
-      const d = document.createElement('div');
-      d.className = tag;
-      d.textContent = text;
-      box.appendChild(d);
-      box.scrollTop = box.scrollHeight;
+    let isGenerating = false;
+
+    // Check system status
+    async function updateStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        hwText.textContent = `${data.device_name || 'GPU'} • ${data.adapter ? 'LoRA Active' : 'Base Model'}`;
+        renderPortfolio(data.portfolio_count ? {} : null, data.discussed_tickers);
+        refreshPortfolio();
+      } catch (err) {
+        hwText.textContent = 'Server Offline';
+        hwBadge.style.background = 'rgba(239, 68, 68, 0.1)';
+        hwBadge.style.color = '#f87171';
+      }
     }
 
-    function post(text) {
-      row.disabled = true; btn.disabled = true;
-      push('user', text);
-      spin.style.display = 'block';
-      fetch('/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: text })
-      }).then(r => r.json())
-       .then(data => {
-         spin.style.display = 'none';
-         if (data.error) { push('other', data.error); }
-         else { push('assistant', data.answer); }
-       })
-       .catch(err => { spin.style.display = 'none'; push('other', err.message); })
-       .finally(() => { row.disabled = false; btn.disabled = false; row.focus(); });
+    async function refreshPortfolio() {
+      try {
+        const res = await fetch('/api/portfolio');
+        const data = await res.json();
+        renderPortfolio(data.portfolio, data.discussed_tickers);
+      } catch (e) {}
     }
 
-    btn.addEventListener('click', () => {
-      const t = row.value.trim();
-      if (!t) return;
-      post(t); row.value = '';
+    function renderPortfolio(portfolio, tickers) {
+      if (portfolio && Object.keys(portfolio).length > 0) {
+        let html = '';
+        for (const [sym, info] of Object.entries(portfolio)) {
+          html += `
+            <div class="holding-item">
+              <span class="holding-ticker">${sym}</span>
+              <div class="holding-details">
+                <div>${info.shares.toFixed(2)} shs</div>
+                <div>Avg: $${info.cost_basis.toFixed(2)}</div>
+              </div>
+            </div>
+          `;
+        }
+        holdingsList.innerHTML = html;
+      }
+
+      if (tickers && tickers.length > 0) {
+        discussedTickers.innerHTML = tickers.map(t => `<span class="ticker-tag">${t}</span>`).join('');
+      }
+    }
+
+    // Auto-expand textarea
+    promptInput.addEventListener('input', () => {
+      promptInput.style.height = 'auto';
+      promptInput.style.height = Math.min(promptInput.scrollHeight, 140) + 'px';
     });
-    row.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { btn.click(); }
+
+    // Handle Quick Chips
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (isGenerating) return;
+        promptInput.value = chip.dataset.prompt;
+        submitPrompt();
+      });
     });
+
+    // Reset conversation
+    resetBtn.addEventListener('click', async () => {
+      if (confirm('Start a fresh conversation session?')) {
+        await fetch('/api/reset', { method: 'POST' });
+        chatArea.innerHTML = `
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">📈</div>
+            <div class="empty-title">Session Cleared</div>
+            <div class="empty-desc">Conversation history and active memory reset.</div>
+          </div>
+        `;
+        refreshPortfolio();
+      }
+    });
+
+    // Submit Prompt
+    async function submitPrompt() {
+      const text = promptInput.value.trim();
+      if (!text || isGenerating) return;
+
+      isGenerating = true;
+      sendBtn.disabled = true;
+      promptInput.value = '';
+      promptInput.style.height = '24px';
+
+      if (emptyState) emptyState.remove();
+
+      // Render User Message
+      appendMessage('user', text);
+
+      // Setup Assistant Message Bubble with streaming container
+      const { row, contentContainer, bubble, eventBox } = createAssistantRow();
+      chatArea.appendChild(row);
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      let accumulatedAnswer = '';
+      const cursor = document.createElement('span');
+      cursor.className = 'stream-cursor';
+      bubble.appendChild(cursor);
+
+      try {
+        const response = await fetch('/chat/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: text })
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // keep partial trailing line
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data: ')) {
+              try {
+                const event = JSON.parse(trimmed.slice(6));
+                handleStreamEvent(event, eventBox, bubble, cursor, (chunk) => {
+                  accumulatedAnswer += chunk;
+                  bubble.innerHTML = marked.parse(accumulatedAnswer);
+                  bubble.appendChild(cursor);
+                  chatArea.scrollTop = chatArea.scrollHeight;
+                });
+              } catch (e) {
+                console.error("SSE parse error:", e);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        bubble.innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
+      } finally {
+        cursor.remove();
+        isGenerating = false;
+        sendBtn.disabled = false;
+        promptInput.focus();
+        refreshPortfolio();
+      }
+    }
+
+    function handleStreamEvent(event, eventBox, bubble, cursor, appendToken) {
+      if (event.type === 'status') {
+        renderEventCard(eventBox, 'status', '⚙️', event.message);
+      } else if (event.type === 'tool_call') {
+        renderEventCard(eventBox, 'tool', '⚡', `Invoking: ${event.tool}(${JSON.stringify(event.args)})`);
+      } else if (event.type === 'tool_result') {
+        renderEventCard(eventBox, 'tool', '📊', `${event.result}`);
+      } else if (event.type === 'rag_retrieval') {
+        renderEventCard(eventBox, 'rag', '📚', `Knowledge retrieved: ${event.snippet}`);
+      } else if (event.type === 'token') {
+        appendToken(event.content);
+      } else if (event.type === 'done') {
+        if (event.portfolio) renderPortfolio(event.portfolio);
+      }
+    }
+
+    function renderEventCard(container, kind, icon, text) {
+      const card = document.createElement('div');
+      card.className = `event-card ${kind}`;
+      card.innerHTML = `
+        <span class="event-badge">${icon} ${kind}</span>
+        <span class="event-text" title="${text}">${text}</span>
+      `;
+      container.appendChild(card);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function appendMessage(role, text) {
+      const row = document.createElement('div');
+      row.className = `message-row ${role}`;
+      
+      const avatar = document.createElement('div');
+      avatar.className = `avatar ${role}`;
+      avatar.textContent = role === 'user' ? 'YOU' : '✦';
+
+      const content = document.createElement('div');
+      content.className = 'message-content';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+
+      content.appendChild(bubble);
+      row.appendChild(avatar);
+      row.appendChild(content);
+
+      chatArea.appendChild(row);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function createAssistantRow() {
+      const row = document.createElement('div');
+      row.className = 'message-row assistant';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar assistant';
+      avatar.textContent = '✦';
+
+      const contentContainer = document.createElement('div');
+      contentContainer.className = 'message-content';
+
+      const eventBox = document.createElement('div');
+      contentContainer.appendChild(eventBox);
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      contentContainer.appendChild(bubble);
+
+      row.appendChild(avatar);
+      row.appendChild(contentContainer);
+
+      return { row, contentContainer, bubble, eventBox };
+    }
+
+    // Keyboard bindings
+    promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitPrompt();
+      }
+    });
+
+    sendBtn.addEventListener('click', submitPrompt);
+
+    // Initial load
+    updateStatus();
   </script>
 </body>
 </html>

@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Testing cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases and audit logs
+data/finsage.db
+*.db
+*.sqlite3
+*.log
+
+# Training checkpoints (intermediate training runs)
+checkpoints/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
