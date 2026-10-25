@@ -50,7 +50,6 @@ FinSage is a small-model financial assistant built for factual evidence-groundin
 ---
 
 ## 🚀 Roadmap & Implementation Status
-
 | Phase | Milestone | Status | Description |
 | :--- | :--- | :---: | :--- |
 | **Phase 0** | **Cleanup & Repo Architecture** | ✅ **Complete** | Truthful docs, typed configuration, and decoupled module tree. |
