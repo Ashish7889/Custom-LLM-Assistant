@@ -11,16 +11,24 @@ from typing import List, Dict, Optional
 
 
 def load_finance_knowledge_base(path: str = "data/finance_instructions.jsonl") -> List[Dict]:
-    """Load the finance instruction dataset as a simple knowledge base."""
+    """Load both base financial instructions and comprehensive personal CA dataset."""
+    from pathlib import Path
     entries = []
-    try:
-        with open(path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    entries.append(json.loads(line))
-    except FileNotFoundError:
-        print(f"Warning: {path} not found, returning empty knowledge base")
+    base_p = Path(path)
+    ca_p = Path(__file__).resolve().parent / "data" / "ca_dataset.jsonl"
+    paths = [base_p]
+    if ca_p.exists() and ca_p not in paths:
+        paths.append(ca_p)
+
+    for p in paths:
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        entries.append(json.loads(line))
+        except FileNotFoundError:
+            continue
     return entries
 
 
@@ -45,7 +53,7 @@ def retrieve_relevant_context(
 ) -> Optional[str]:
     """Retrieve verified financial concepts adhering to ECC RAG quality standards:
     - Pruned relevance matching (no noisy fallback chunks)
-    - Instruction and output term overlap
+    - Instruction, context, and output term overlap
     - Source attribution tagging
     """
     if not knowledge_base:
@@ -62,28 +70,29 @@ def retrieve_relevant_context(
         "portfolio", "risk", "return", "yield", "asset", "liability",
         "credit", "loan", "mortgage", "insurance", "tax", "capital",
         "equity", "share", "invest", "sell", "buy", "brokerage", "pe",
-        "order", "limit", "reit", "401k", "ira", "sec", "insider"
+        "order", "limit", "reit", "401k", "ira", "sec", "insider",
+        "sukanya", "samriddhi", "yojana", "atal", "pension", "kisan"
     }
 
     scored = []
     for entry in knowledge_base:
         instruction = entry.get("instruction", "")
-        output = entry.get("output", "")
+        content_text = entry.get("context", "") or entry.get("output", "")
         
         instr_words = _extract_words(instruction)
-        out_words = _extract_words(output)
+        content_words = _extract_words(content_text)
 
         # High priority: overlap with the specific concept instruction
         instr_overlap = len(question_words & instr_words)
-        out_overlap = len(question_words & out_words)
+        content_overlap = len(question_words & content_words)
 
         # Direct overlap is mandatory (prevent hallucinated topical matches)
-        direct_matches = (instr_overlap * 3) + out_overlap
+        direct_matches = (instr_overlap * 4) + content_overlap
         if direct_matches < min_score:
             continue
 
         # Topic relevance boost
-        finance_boost = len(question_words & out_words & finance_vocab)
+        finance_boost = len(question_words & content_words & finance_vocab)
         total_score = direct_matches + (finance_boost * 2)
 
         scored.append((total_score, entry))
@@ -98,7 +107,7 @@ def retrieve_relevant_context(
     contexts = []
     for entry in top_entries:
         title = entry.get("instruction", "Financial Knowledge")
-        content = entry.get("output", "").strip()
+        content = (entry.get("context") or entry.get("output", "")).strip()
         contexts.append(f"[Verified Source: {title}]\n{content}")
 
     return "\n\n".join(contexts)

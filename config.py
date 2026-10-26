@@ -43,7 +43,7 @@ class FinSageConfig(BaseModel):
     adapter_path: Path = BASE_DIR / "finance_adapter" / "final"
     fallback_adapter_path: Path = BASE_DIR / "finetune" / "adapter"
     vram_budget_gb: float = 6.0
-    max_tokens: int = 250
+    max_tokens: int = 400
     temperature: float = 0.1  # Low temperature for factual compliance
 
     # Storage & DB

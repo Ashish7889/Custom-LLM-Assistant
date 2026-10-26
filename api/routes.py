@@ -112,7 +112,12 @@ async def chat_sse(request: ChatRequest):
                 "data": json.dumps({"session_id": session_id}),
             }
 
-            for event in orchestrator.run(request.prompt, session_id, request.user_id):
+            for event in orchestrator.run(
+                request.prompt,
+                session_id,
+                request.user_id,
+                web_search=request.web_search,
+            ):
                 if event.event_type == "sentence":
                     collected_sentences.append(event.payload)
                 elif event.event_type == "source_retrieved":

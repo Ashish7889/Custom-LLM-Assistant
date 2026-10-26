@@ -22,7 +22,9 @@ from orchestrator.types import (
 from decisions.engine import DecisionEngine
 from generator.base import StructuredGenerator
 from verifier.verifier import ResponseVerifier
+import re
 from tools import calculator, market, tax_india, debt_planner
+from tools.web_search import search_financial_web
 from rag_finance import load_finance_knowledge_base, retrieve_relevant_context
 from config import cfg
 
@@ -44,7 +46,7 @@ class OrchestratorStateMachine:
         self.knowledge_base = load_finance_knowledge_base(str(cfg.knowledge_base_path))
 
     def run(
-        self, prompt: str, session_id: str, user_id: str
+        self, prompt: str, session_id: str, user_id: str, web_search: bool = True
     ) -> Generator[StreamEvent, None, None]:
         """Execute state machine transitions, yielding SSE events at each step."""
         state = OrchestratorState.INGEST
@@ -81,11 +83,6 @@ class OrchestratorStateMachine:
         # E.g. "who can apply to it" -> resolve "it" to the entity in the previous message
         resolved_prompt = clean_prompt
         prompt_lower = clean_prompt.lower()
-        pronoun_triggers = [
-            "it", "this", "that", "them", "the scheme", "the loan", "apply to it",
-            "who can apply", "eligibility", "documents needed", "how much", "what about",
-            "how do i join", "can i get it", "criteria", "who is eligible", "tell me more"
-        ]
         
         try:
             history = db.get_messages(session_id, user_id)
@@ -102,10 +99,27 @@ class OrchestratorStateMachine:
                         last_topic = content
                         break
 
-            is_followup = (
-                any(pt in prompt_lower.split() or pt in prompt_lower for pt in pronoun_triggers)
-                or (len(clean_prompt.split()) <= 5 and not any(kw in prompt_lower for kw in ["hi", "hello", "who are you"]))
+            # If the user explicitly asks about a known named topic, it is a new topic, NOT a followup
+            explicit_named_topics = [
+                "sukanya", "samriddhi", "atal pension", "pm-kisan", "pm kisan",
+                "ayushman", "ppf", "nps", "epf", "87a", "80c", "80d", "itr", "regime",
+                "old regime", "new regime", "flat rate", "reducing apr", "prepayment",
+                "credit card", "personal loan", "home loan", "gold", "bull market", "bear market",
+                "compound interest", "sip", "emi", "cagr", "dividend", "market cap"
+            ]
+            has_explicit_topic = any(t in prompt_lower for t in explicit_named_topics)
+
+            followup_words = [
+                "it", "this", "that", "them", "these", "those", "the scheme", "the loan",
+                "who can apply", "eligibility", "documents needed", "how do i join",
+                "can i get it", "criteria", "who is eligible", "tell me more", "what about it"
+            ]
+            has_pronoun = any(
+                re.search(rf"\b{re.escape(pt)}\b", prompt_lower)
+                for pt in followup_words
             )
+
+            is_followup = not has_explicit_topic and has_pronoun
             if last_topic and is_followup:
                 resolved_prompt = f"{clean_prompt} regarding {last_topic}"
         except Exception as e:
@@ -220,9 +234,9 @@ class OrchestratorStateMachine:
                     payload={"tool": tool_res.tool_name, "formatted": tool_res.formatted_text},
                 )
 
-        # 3b. Attempt conceptual RAG retrieval ONLY if no documents and no tool produced results
-        # Use resolved_prompt to maintain conversational continuity
+        # 3b. Attempt conceptual RAG retrieval and Live Internet Web Search if no session documents
         if not sources and not tool_results:
+            # 1. Local verified personal CA knowledge base
             rag_text = retrieve_relevant_context(resolved_prompt, self.knowledge_base, top_k=2)
             if rag_text:
                 chunk = SourceChunk(
@@ -237,6 +251,20 @@ class OrchestratorStateMachine:
                     event_type="source_retrieved",
                     payload={"source_id": chunk.id, "source_name": chunk.source_name, "preview": chunk.text[:120] + "..."},
                 )
+
+            # 2. Live Internet Web Search for real-time facts and latest government rules
+            if web_search:
+                yield StreamEvent(
+                    event_type="step",
+                    payload={"state": "WEB_SEARCH", "description": f"Searching live internet for: {resolved_prompt[:42]}..."},
+                )
+                web_chunks = search_financial_web(resolved_prompt, max_results=3, start_id=len(sources) + 1)
+                for w_chunk in web_chunks:
+                    sources.append(w_chunk)
+                    yield StreamEvent(
+                        event_type="source_retrieved",
+                        payload={"source_id": w_chunk.id, "source_name": w_chunk.source_name, "preview": w_chunk.text[:120] + "..."},
+                    )
 
         # -------------------------------------------------------------
         # STEP 4: GENERATE (JSON-grammar constrained)

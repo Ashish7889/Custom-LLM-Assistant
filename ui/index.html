@@ -236,6 +236,24 @@
       border-color: rgba(99, 102, 241, 0.4);
       color: #a5b4fc;
     }
+
+    /* Web Search Toggle */
+    .web-toggle {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 500; padding: 4px 10px;
+      border-radius: 14px; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text-muted);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .web-toggle.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+    .composer-btn.web-active {
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.15);
+    }
     .speak-card-btn {
       margin-top: 12px; display: inline-flex; align-items: center; gap: 5px;
       font-size: 11.5px; font-family: var(--font); padding: 4px 9px;
@@ -301,6 +319,9 @@
           <option value="qwen">⚡ Qwen 2.5 1.5B CA</option>
         </select>
       </div>
+      <button class="web-toggle active" id="webSearchToggle" title="Toggle Live Internet Web Search Grounding">
+        <span id="webSearchIcon">🌐</span> <span id="webSearchLabel">Web: ON</span>
+      </button>
       <button class="tts-toggle active" id="ttsToggle" title="Toggle Natural Voice Speech Output">
         <span id="ttsIcon">🔊</span> <span id="ttsLabel">Voice: ON</span>
       </button>
@@ -339,6 +360,7 @@
         <div class="composer">
           <button class="composer-btn" id="uploadBtn" title="Upload document (PDF / TXT)">📎</button>
           <input type="file" id="fileInput" accept=".pdf,.docx,.txt" style="display:none;" />
+          <button class="composer-btn web-active" id="webSearchBtn" title="Toggle Live Internet Web Search">🌐</button>
           <button class="composer-btn" id="micBtn" title="Speak naturally (Microphone Voice Input)">🎤</button>
           <textarea id="promptInput" placeholder="Ask in plain language, or click 🎤 to speak your question..."></textarea>
           <button class="composer-btn send" id="sendBtn" title="Send Query">➤</button>
@@ -371,9 +393,45 @@
     const fileInput = document.getElementById('fileInput');
     const newChatBtn = document.getElementById('newChatBtn');
     const modelSelector = document.getElementById('modelSelector');
+    const webSearchToggle = document.getElementById('webSearchToggle');
+    const webSearchBtn = document.getElementById('webSearchBtn');
 
     let isBusy = false;
     let ttsEnabled = true;
+    let webSearchEnabled = localStorage.getItem('finsage_web_search') !== 'false';
+
+    function updateWebSearchUI() {
+      if (webSearchEnabled) {
+        if (webSearchToggle) {
+          webSearchToggle.classList.add('active');
+          const lbl = webSearchToggle.querySelector('#webSearchLabel');
+          if (lbl) lbl.textContent = 'Web: ON';
+        }
+        if (webSearchBtn) webSearchBtn.classList.add('web-active');
+      } else {
+        if (webSearchToggle) {
+          webSearchToggle.classList.remove('active');
+          const lbl = webSearchToggle.querySelector('#webSearchLabel');
+          if (lbl) lbl.textContent = 'Web: OFF';
+        }
+        if (webSearchBtn) webSearchBtn.classList.remove('web-active');
+      }
+      localStorage.setItem('finsage_web_search', webSearchEnabled);
+    }
+
+    if (webSearchToggle) {
+      webSearchToggle.addEventListener('click', () => {
+        webSearchEnabled = !webSearchEnabled;
+        updateWebSearchUI();
+      });
+    }
+    if (webSearchBtn) {
+      webSearchBtn.addEventListener('click', () => {
+        webSearchEnabled = !webSearchEnabled;
+        updateWebSearchUI();
+      });
+    }
+    updateWebSearchUI();
 
     // Active Neural Model selection
     let activeModelKey = localStorage.getItem('finsage_model') || 'tinyllama';
@@ -613,7 +671,8 @@
             prompt: text,
             session_id: currentSessionId,
             user_id: 'default_user',
-            model: activeModelKey
+            model: activeModelKey,
+            web_search: webSearchEnabled
           })
         });
 

@@ -11,6 +11,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = Field(None, description="Active session ID")
     user_id: str = Field("default_user", description="Authenticated user ID")
     model: Optional[str] = Field(None, description="Model key to use for inference: tinyllama or qwen")
+    web_search: bool = Field(True, description="Enable live internet search verification")
 
 
 class ModelSwitchRequest(BaseModel):
