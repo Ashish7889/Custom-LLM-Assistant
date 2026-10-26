@@ -357,9 +357,18 @@
 
       <!-- Composer Dock -->
       <div class="composer-dock">
+        <!-- Attached Document Badge -->
+        <div id="attachedDocsBar" style="display:none; align-items:center; justify-content:space-between; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px; padding: 6px 12px; margin-bottom: 8px; font-size: 12.5px; color: var(--accent);">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span>📄</span>
+            <span id="attachedDocsText">Document attached</span>
+          </div>
+          <button id="clearDocBtn" style="background:transparent; border:none; color:var(--text-dim); cursor:pointer; font-size:14px; padding:0 4px;" title="Remove document">✕</button>
+        </div>
+
         <div class="composer">
-          <button class="composer-btn" id="uploadBtn" title="Upload document (PDF / TXT)">📎</button>
-          <input type="file" id="fileInput" accept=".pdf,.docx,.txt" style="display:none;" />
+          <button class="composer-btn" id="uploadBtn" title="Upload document (PDF / TXT / DOCX)">📎</button>
+          <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" style="display:none;" />
           <button class="composer-btn web-active" id="webSearchBtn" title="Toggle Live Internet Web Search">🌐</button>
           <button class="composer-btn" id="micBtn" title="Speak naturally (Microphone Voice Input)">🎤</button>
           <textarea id="promptInput" placeholder="Ask in plain language, or click 🎤 to speak your question..."></textarea>
@@ -391,6 +400,9 @@
     const ttsLabel = document.getElementById('ttsLabel');
     const uploadBtn = document.getElementById('uploadBtn');
     const fileInput = document.getElementById('fileInput');
+    const attachedDocsBar = document.getElementById('attachedDocsBar');
+    const attachedDocsText = document.getElementById('attachedDocsText');
+    const clearDocBtn = document.getElementById('clearDocBtn');
     const newChatBtn = document.getElementById('newChatBtn');
     const modelSelector = document.getElementById('modelSelector');
     const webSearchToggle = document.getElementById('webSearchToggle');
@@ -463,6 +475,7 @@
       newChatBtn.addEventListener('click', () => {
         currentSessionId = 'session_' + Math.random().toString(36).substring(2, 10);
         localStorage.setItem('finsage_session_id', currentSessionId);
+        if (attachedDocsBar) attachedDocsBar.style.display = 'none';
         chatArea.innerHTML = `
           <div class="message assistant">
             <div class="assistant-card">
@@ -619,24 +632,56 @@
       micBtn.addEventListener('click', toggleRecording);
     }
 
+    // Clear attached document
+    if (clearDocBtn) {
+      clearDocBtn.addEventListener('click', () => {
+        attachedDocsBar.style.display = 'none';
+        fileInput.value = '';
+      });
+    }
+
     // File Upload Handler
     uploadBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
+
+      uploadBtn.textContent = '⏳';
+      uploadBtn.disabled = true;
+
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('session_id', 'default_session');
+      formData.append('session_id', currentSessionId);
+      formData.append('user_id', 'default_user');
+
       try {
         const res = await fetch('/upload', { method: 'POST', body: formData });
         const json = await res.json();
-        if (json.status === 'success') {
-          alert(`Document "${json.filename}" ingested (${json.chunks_created} chunks). You can now ask questions about it.`);
+        if (res.ok && (json.status === 'indexed' || json.status === 'success' || json.success)) {
+          const chunkCount = json.chunks_count || json.chunks_created || 1;
+          attachedDocsBar.style.display = 'flex';
+          attachedDocsText.innerHTML = `<strong>${escapeHtml(json.filename)}</strong> (${chunkCount} chunks indexed, ${json.pages || 1} pages)`;
+
+          // Add uploaded document card to right inspector sidebar
+          const docCard = document.createElement('div');
+          docCard.className = 'source-card';
+          docCard.innerHTML = `
+            <div class="source-title">📄 [Uploaded Document] ${escapeHtml(json.filename)}</div>
+            <div class="source-snippet">${chunkCount} chunks successfully indexed into session memory. FinSage will now ground answers directly against this document.</div>
+          `;
+          if (sourceInspector.children.length === 1 && sourceInspector.firstElementChild.textContent.includes('Active citations')) {
+            sourceInspector.innerHTML = '';
+          }
+          sourceInspector.prepend(docCard);
         } else {
-          alert('Upload failed: ' + json.message);
+          alert('Upload failed: ' + (json.detail || json.message || 'Server error'));
         }
       } catch (err) {
         alert('Upload error: ' + err.message);
+      } finally {
+        uploadBtn.textContent = '📎';
+        uploadBtn.disabled = false;
+        fileInput.value = '';
       }
     });
 

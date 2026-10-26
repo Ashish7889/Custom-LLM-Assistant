@@ -182,8 +182,11 @@ async def upload_document(
             "filename": filename,
             "session_id": session_id,
             "chunks_count": len(chunks),
+            "chunks_created": len(chunks),
             "pages": max_page,
             "status": "indexed",
+            "success": True,
+            "message": f"Document '{filename}' successfully ingested ({len(chunks)} chunks).",
         }
     except IngestionError as ie:
         raise HTTPException(status_code=400, detail=str(ie))
