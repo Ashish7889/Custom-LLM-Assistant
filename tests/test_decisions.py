@@ -35,3 +35,15 @@ def test_decision_answer_or_abstain_empty_sources():
         options=["answer", "abstain"],
     )
     assert res.choice_id == "abstain"
+
+
+def test_decision_route_intent_scheme_acronym():
+    """Ensure scheme acronyms like PM-KISAN are routed to concept_qa and not market_quote."""
+    engine = DecisionEngine(backend="baseline")
+    res = engine.decide(
+        task="route_intent",
+        state={"prompt": "What is PM-KISAN and how much money do farmers get"},
+        options=["market_quote", "concept_qa", "calculator"],
+    )
+    assert res.choice_id == "concept_qa"
+    assert res.probability >= 0.8

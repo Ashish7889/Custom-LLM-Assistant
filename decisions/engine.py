@@ -86,9 +86,18 @@ class DecisionEngine:
                 choice = "calculator" if "calculator" in options else options[0]
                 return DecisionResult(task=task, choice_id=choice, probability=0.92, reason="Math/calculator terms identified", backend="baseline")
             
-            if any(k in prompt for k in market_keywords) or bool(re.search(r"\b[A-Z]{1,5}\b", state.get("prompt", ""))):
-                choice = "market_quote" if "market_quote" in options else options[0]
-                return DecisionResult(task=task, choice_id=choice, probability=0.88, reason="Live market/ticker keywords identified", backend="baseline")
+            scheme_keywords = [
+                "yojana", "scheme", "kisan", "pm-kisan", "pmkisan", "sukanya", "ssy",
+                "atal pension", "apy", "ayushman", "pmjay", "pm-jay", "jan dhan", "pmjdy",
+                "pension", "farmer", "subsidy", "welfare", "epf", "ppf", "nps", "gratuity"
+            ]
+            if any(k in prompt for k in scheme_keywords) and "concept_qa" in options:
+                return DecisionResult(task=task, choice_id="concept_qa", probability=0.96, reason="Government scheme/pension/welfare terms identified", backend="baseline")
+
+            has_market_kw = any(k in prompt for k in market_keywords)
+            has_explicit_exchange = bool(re.search(r"\b[A-Z]{1,5}\.(?:NS|BO)\b", state.get("prompt", "")))
+            if (has_market_kw or has_explicit_exchange) and "market_quote" in options:
+                return DecisionResult(task=task, choice_id="market_quote", probability=0.90, reason="Live market/ticker keywords identified", backend="baseline")
             
             if state.get("has_uploaded_docs", False):
                 choice = "document_qa" if "document_qa" in options else options[0]

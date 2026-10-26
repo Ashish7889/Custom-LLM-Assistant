@@ -457,8 +457,13 @@ class OrchestratorStateMachine:
         # 2. Look for uppercase ticker symbols if not matched by name
         if not ticker:
             m = re.findall(r"\b[A-Z]{1,5}(?:\.(?:NS|BO))?\b", prompt)
+            excluded = {
+                "WHAT", "IS", "THE", "AND", "FOR", "BUY", "SELL", "STOCK", "PRICE", "SHARE",
+                "PM", "KISAN", "SSY", "APY", "GST", "ITR", "RBI", "SEBI", "PAN", "EPF", "PPF",
+                "NPS", "FD", "RD", "HOW", "MUCH", "DO", "GET", "CAN", "YOU", "WHO", "ARE"
+            }
             for cand in m:
-                if cand not in ["WHAT", "IS", "THE", "AND", "FOR", "BUY", "SELL", "STOCK", "PRICE", "SHARE"]:
+                if cand not in excluded:
                     ticker = cand
                     break
 
