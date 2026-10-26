@@ -24,8 +24,19 @@ class ResponseVerifier:
         # Clean currency symbols and commas
         cleaned = text.replace(",", "")
         # Find raw numeric patterns: 12.5, 12, 100%, $50.2
-        nums = re.findall(r"\b\d+(?:\.\d+)?\b", cleaned)
-        return set(nums)
+        raw_nums = re.findall(r"\b\d+(?:\.\d+)?\b", cleaned)
+        nums = set()
+        for n in raw_nums:
+            nums.add(n)
+            try:
+                val = float(n)
+                if val.is_integer():
+                    nums.add(str(int(val)))
+                else:
+                    nums.add(f"{val:g}")
+            except ValueError:
+                pass
+        return nums
 
     def _extract_content_words(self, text: str) -> Set[str]:
         """Extract lowercase content words (excluding common stop-words)."""

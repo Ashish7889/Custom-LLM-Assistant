@@ -18,8 +18,8 @@ RUNTIME_SYSTEM_PROMPT = """You are FinSage, a trusted Personal Chartered Account
 Speak warmly, clearly, and naturally in plain language, providing high-quality financial reasoning and structured explanations.
 Rules:
 1. Explain financial concepts, schemes, and tax rules clearly with practical reasoning: highlight eligibility, interest rates, tax benefits (Section 80C, EEE, Section 87A), and limits.
-2. Every number, percentage, and date must come strictly from the SOURCES and TOOL RESULTS. Never invent figures.
-3. Cite every sentence with [n] indicating which source ID it references.
+2. Every number, percentage, and date must come strictly from the SOURCES and TOOL RESULTS. Never invent figures. Do not introduce extra numbers (like '0-10') not in the sources; use the exact phrasing from the sources such as 'under age 10' or 'before turning 10'.
+3. Cite every sentence with [n] indicating which source ID it references. If combining facts from multiple sources in one sentence, cite all relevant source IDs, e.g. [1, 2].
 4. If sources or tool results do not contain the answer, set abstain=true and say: "I don't have that in my sources."
 5. Output strictly valid JSON matching the schema:
 {"abstain": bool, "sentences": [{"text": str, "cites": [int]}]}"""
@@ -152,10 +152,28 @@ class StructuredGenerator:
 
         if self.tokenizer is not None and hasattr(self.tokenizer, "apply_chat_template"):
             try:
-                messages = [
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": user_content},
-                ]
+                messages = [{"role": "system", "content": self.system_prompt}]
+                # Include grounded few-shot CA example for in-context schema grounding
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        "SOURCES:\n"
+                        "SOURCE [1]: Sukanya Samriddhi Yojana (SSY) is a government-backed savings scheme for girl children before age 10. "
+                        "Minimum annual deposit is ₹250 and maximum is ₹1.5 Lakh. It offers an interest rate of ~8.2%, EEE tax exemption under Section 80C, and matures after 21 years.\n\n"
+                        "QUESTION: What is Sukanya Samriddhi Yojana for my daughter?"
+                    )
+                })
+                messages.append({
+                    "role": "assistant",
+                    "content": (
+                        '{"abstain": false, "sentences": ['
+                        '{"text": "Sukanya Samriddhi Yojana is a government-backed savings scheme for girl children that parents can open before the child reaches age 10.", "cites": [1]}, '
+                        '{"text": "It offers a high sovereign interest rate of around 8.2% and matures after 21 years.", "cites": [1]}, '
+                        '{"text": "Annual deposits range from a minimum of ₹250 to ₹1.5 Lakh and enjoy triple tax-free (EEE) status under Section 80C.", "cites": [1]}'
+                        ']}'
+                    )
+                })
+                messages.append({"role": "user", "content": user_content})
                 return self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             except Exception:
                 pass
@@ -184,13 +202,19 @@ class StructuredGenerator:
             m = re.search(r"\{.*\}", text, re.DOTALL)
             if not m:
                 raise ValueError("No JSON object found in output")
-            raw_json = json.loads(m.group(0))
+            raw_str = m.group(0)
+            # Sanitize illegal escapes (e.g., \%, \$, \') commonly emitted by LLMs
+            sanitized = re.sub(r'\\([^"\\/bfnrtu])', r'\1', raw_str)
+            # Remove trailing commas before closing braces/brackets
+            sanitized = re.sub(r',\s*([\]}])', r'\1', sanitized)
+            raw_json = json.loads(sanitized)
 
             abstain = bool(raw_json.get("abstain", False))
             sentences = []
             for item in raw_json.get("sentences", []):
                 t = str(item.get("text", "")).strip()
                 t = re.sub(r"^\[Verified Source:[^\]]+\]\s*", "", t).strip()
+                t = re.sub(r"^(?:SOURCE\s*\[\d+\]:\s*)+", "", t).strip()
                 cites = [int(c) for c in item.get("cites", []) if isinstance(c, (int, str)) and str(c).isdigit()]
                 if t:
                     sentences.append(SentenceItem(text=t, cites=cites))
@@ -260,7 +284,8 @@ class StructuredGenerator:
         if sources:
             for s in sources[:2]:
                 clean_text = re.sub(r"\[Verified Source:[^\]]+\]", "", s.text).strip()
-                chunks = [c.strip() for c in clean_text.split(".") if len(c.strip()) > 8]
+                # Split cleanly on sentence boundaries without breaking float numbers (e.g. 8.2% or 1.5 Lakh)
+                chunks = [c.strip() for c in re.split(r"(?<!\d)\.(?!\d)\s*", clean_text) if len(c.strip()) > 8]
                 for c in chunks[:3]:
                     sent_text = c if c.endswith(".") else f"{c}."
                     sentences.append(SentenceItem(text=sent_text, cites=[s.id]))
