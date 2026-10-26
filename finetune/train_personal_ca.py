@@ -12,6 +12,7 @@ Optimized for NVIDIA RTX 3060 Laptop GPU:
 import argparse
 import json
 import os
+os.environ["HF_HUB_DISABLE_XET"] = "1"
 import random
 from pathlib import Path
 import torch
@@ -74,6 +75,12 @@ def train_model(model_key: str = "tinyllama", max_steps: int = 100, batch_size: 
         trust_remote_code=True,
     )
     model.config.use_cache = False
+    if hasattr(model, "enable_input_require_grads"):
+        model.enable_input_require_grads()
+    else:
+        def make_inputs_require_grad(module, input, output):
+            output.requires_grad_(True)
+        model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
     model.gradient_checkpointing_enable()
 
     # Peak-level LoRA: All attention and MLP projections adapted at rank 32

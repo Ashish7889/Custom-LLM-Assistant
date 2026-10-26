@@ -15,10 +15,10 @@ from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File, 
 from fastapi.responses import HTMLResponse, StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
-from api.schemas import ChatRequest, HealthResponse, SessionResponse
+from api.schemas import ChatRequest, HealthResponse, SessionResponse, ModelSwitchRequest
 from orchestrator.state_machine import OrchestratorStateMachine
 from memory.db import db
-from config import cfg
+from config import cfg, BASE_DIR
 
 router = APIRouter()
 orchestrator = OrchestratorStateMachine()
@@ -48,9 +48,48 @@ async def health():
     )
 
 
+@router.get("/models")
+async def get_models():
+    """Retrieve active and available neural models for FinSage."""
+    tiny_path = BASE_DIR / "adapters" / "tinyllama_ca"
+    qwen_path = BASE_DIR / "adapters" / "qwen_ca"
+    return {
+        "active_model": orchestrator.generator.active_model_key,
+        "available_models": [
+            {
+                "key": "tinyllama",
+                "name": "TinyLlama 1.1B Personal CA",
+                "params": "1.1B",
+                "ready": tiny_path.exists(),
+            },
+            {
+                "key": "qwen",
+                "name": "Qwen 2.5 1.5B Personal CA",
+                "params": "1.5B",
+                "ready": qwen_path.exists(),
+            },
+        ],
+    }
+
+
+@router.post("/models/switch")
+async def switch_model(req: ModelSwitchRequest):
+    """Dynamically switch between fine-tuned TinyLlama and Qwen 2.5 on GPU."""
+    if req.model not in ["tinyllama", "qwen"]:
+        raise HTTPException(status_code=400, detail="Invalid model. Choose 'tinyllama' or 'qwen'.")
+    orchestrator.generator.set_model(req.model)
+    return {
+        "status": "switched",
+        "active_model": orchestrator.generator.active_model_key,
+    }
+
+
 @router.post("/chat")
 async def chat_sse(request: ChatRequest):
     """Real-time Server-Sent Events (SSE) streaming endpoint."""
+    if request.model and request.model in ["tinyllama", "qwen"]:
+        orchestrator.generator.set_model(request.model)
+
     session_id = request.session_id or db.create_session(request.user_id, title=request.prompt[:32])
     
     # Persist user prompt

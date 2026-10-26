@@ -59,24 +59,47 @@ FEW_SHOT_EXAMPLES = [
 
 
 class StructuredGenerator:
-    """JSON grammar-constrained generation engine backed by fine-tuned TinyLlama."""
+    """JSON grammar-constrained generation engine backed by fine-tuned TinyLlama or Qwen."""
 
-    def __init__(self):
+    def __init__(self, model_key: Optional[str] = None):
         self.system_prompt = RUNTIME_SYSTEM_PROMPT
         self.device = cfg.device
+        self.active_model_key = model_key or cfg.active_model
         self.model = None
         self.tokenizer = None
-        self._load_neural_model()
+        self._load_neural_model(self.active_model_key)
 
-    def _load_neural_model(self):
-        """Load base TinyLlama and attach the peak fine-tuned Personal CA LoRA adapter."""
+    def set_model(self, model_key: str):
+        """Switch active neural model between tinyllama and qwen."""
+        if model_key == self.active_model_key and self.model is not None:
+            return
+        self.active_model_key = model_key
+        self._load_neural_model(model_key)
+
+    def _load_neural_model(self, model_key: str):
+        """Load base model and attach the fine-tuned Personal CA LoRA adapter."""
         try:
+            import gc
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
             from peft import PeftModel
 
-            adapter_dir = BASE_DIR / "adapters" / "tinyllama_ca"
-            tokenizer_path = str(adapter_dir) if adapter_dir.exists() else cfg.base_model_name
+            # Clean existing model from GPU VRAM
+            if self.model is not None:
+                del self.model
+                self.model = None
+            if self.tokenizer is not None:
+                del self.tokenizer
+                self.tokenizer = None
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+            m_config = cfg.models.get(model_key, cfg.models.get("tinyllama"))
+            base_model_name = m_config["name"]
+            adapter_dir = m_config.get("ca_adapter_path") or m_config.get("adapter_path")
+
+            tokenizer_path = str(adapter_dir) if (adapter_dir and adapter_dir.exists()) else base_model_name
 
             self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
             if self.tokenizer.pad_token is None:
@@ -84,21 +107,21 @@ class StructuredGenerator:
 
             dtype = torch.float16 if self.device == "cuda" else torch.float32
             base_model = AutoModelForCausalLM.from_pretrained(
-                cfg.base_model_name,
+                base_model_name,
                 dtype=dtype,
                 device_map=self.device if self.device == "cuda" else None,
                 trust_remote_code=True,
             )
 
-            if adapter_dir.exists():
+            if adapter_dir and adapter_dir.exists():
                 self.model = PeftModel.from_pretrained(base_model, str(adapter_dir))
             else:
                 self.model = base_model
 
             self.model.eval()
-            logger.info("StructuredGenerator: Fine-tuned TinyLlama neural model loaded successfully on %s", self.device)
+            logger.info("StructuredGenerator: Model %s loaded successfully on %s", model_key, self.device)
         except Exception as e:
-            logger.warning("Could not load neural TinyLlama weights, running in fallback mode: %s", str(e))
+            logger.warning("Could not load neural model %s, running in fallback mode: %s", model_key, str(e))
             self.model = None
 
     def build_prompt(
@@ -108,7 +131,29 @@ class StructuredGenerator:
         tool_results: List[ToolResult],
         repair_feedback: Optional[str] = None,
     ) -> str:
-        """Compose grounded prompt with sources and few-shot examples."""
+        """Compose grounded prompt using chat template or few-shot fallback."""
+        source_lines = []
+        for s in sources:
+            source_lines.append(f"SOURCE [{s.id}]: {s.text}")
+        for i, tr in enumerate(tool_results):
+            source_lines.append(f"TOOL RESULT [{i}]: {tr.formatted_text}")
+
+        context_text = "\n".join(source_lines) if source_lines else "NO_SOURCES_FOUND: Missing evidence."
+        user_content = f"SOURCES:\n{context_text}\n\nQUESTION: {question}"
+        if repair_feedback:
+            user_content += f"\n\nPREVIOUS DRAFT REJECTED BY VERIFIER: {repair_feedback}\nPlease correct all numbers and citations immediately."
+
+        if self.tokenizer is not None and hasattr(self.tokenizer, "apply_chat_template"):
+            try:
+                messages = [
+                    {"role": "system", "content": self.system_prompt},
+                    {"role": "user", "content": user_content},
+                ]
+                return self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            except Exception:
+                pass
+
+        # Fallback few-shot prompt
         sections = [self.system_prompt, "\n--- FEW-SHOT EXAMPLES ---"]
         for eg in FEW_SHOT_EXAMPLES:
             sections.append(f"SOURCES: {json.dumps(eg['sources'])}\nTOOL RESULTS: {json.dumps(eg['tool_results'])}\nQUESTION: {eg['question']}\nOUTPUT:\n{json.dumps(eg['response'])}")

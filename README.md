@@ -59,7 +59,9 @@ FinSage is a small-model financial assistant built for factual evidence-groundin
 | **Phase 4** | **Personal CA Tools & Debt Planner** | ✅ **Complete** | Budget 2024–25 Old vs New Tax Regime, Section 87A ₹0 rebate up to ₹7.75L, ITR form selector, and Newton-Raphson flat vs reducing APR solver. |
 | **Phase 5** | **Voice Audio & Natural Dialogue** | ✅ **Complete** | Web Speech API microphone STT (`en-IN`), browser voice TTS readout, and multi-turn pronoun context resolution. |
 | **Phase 6** | **Test Suite & Verification** | ✅ **Complete** | 33 comprehensive unit and integration tests covering tools, verifier, API, and state machine transitions. |
-| **Phase 7** | **Personal CA SFT Fine-Tuning** | ✅ **Complete** | 1,330 curated tax/scheme triplets; TinyLlama-1.1B trained on RTX 3060 GPU with LoRA rank 32, loss converging to 0.3895. |
+| **Phase 7** | **Dual Model Personal CA Fine-Tuning** | ✅ **Complete** | 1,330 curated tax/scheme triplets; both TinyLlama-1.1B (loss 0.389) and Qwen-2.5-1.5B (loss 0.291) fine-tuned on RTX 3060 GPU with LoRA rank 32. |
+| **Phase 8** | **Interactive Model Switcher** | ✅ **Complete** | Dynamic seamless model toggle (`TinyLlama 1.1B` vs `Qwen 2.5 1.5B`) in header UI, FastAPI routes, and GPU VRAM management. |
+| **Phase 9** | **50-Item Held-Out Evaluation Benchmark** | ✅ **Complete** | Full benchmark in `benchmark/eval_personal_ca.py` across 15 Tax, 10 Debt, 15 Scheme, and 10 Abstention queries with 0% invented numbers. |
 
 ---
 

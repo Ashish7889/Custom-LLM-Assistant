@@ -247,6 +247,25 @@
     .speak-card-btn.speaking { color: #a5b4fc; border-color: var(--accent); animation: pulseSlow 1.5s infinite; }
     @keyframes pulseSlow { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
+    /* Model Selector Dropdown */
+    .model-dropdown {
+      background: var(--bg-card);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      cursor: pointer;
+      outline: none;
+      font-family: var(--font);
+      transition: all 0.2s ease;
+    }
+    .model-dropdown:hover {
+      border-color: var(--accent);
+      background: var(--bg-surface);
+    }
+
     /* Right Sidebar: Source inspector */
     .inspector-panel {
       width: 320px; border-left: 1px solid var(--border);
@@ -276,8 +295,11 @@
     </div>
 
     <div class="header-controls">
-      <div class="badge" style="background: rgba(99, 102, 241, 0.1); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.25);">
-        <span>🧠 TinyLlama-1.1B CA</span>
+      <div class="model-select-wrap">
+        <select id="modelSelector" class="model-dropdown" title="Select Neural CA Model">
+          <option value="tinyllama">🧠 TinyLlama 1.1B CA</option>
+          <option value="qwen">⚡ Qwen 2.5 1.5B CA</option>
+        </select>
       </div>
       <button class="tts-toggle active" id="ttsToggle" title="Toggle Natural Voice Speech Output">
         <span id="ttsIcon">🔊</span> <span id="ttsLabel">Voice: ON</span>
@@ -348,9 +370,29 @@
     const uploadBtn = document.getElementById('uploadBtn');
     const fileInput = document.getElementById('fileInput');
     const newChatBtn = document.getElementById('newChatBtn');
+    const modelSelector = document.getElementById('modelSelector');
 
     let isBusy = false;
     let ttsEnabled = true;
+
+    // Active Neural Model selection
+    let activeModelKey = localStorage.getItem('finsage_model') || 'tinyllama';
+    if (modelSelector) {
+      modelSelector.value = activeModelKey;
+      modelSelector.addEventListener('change', async (e) => {
+        activeModelKey = e.target.value;
+        localStorage.setItem('finsage_model', activeModelKey);
+        try {
+          await fetch('/models/switch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: activeModelKey })
+          });
+        } catch (err) {
+          console.warn('Model switch sync failed:', err);
+        }
+      });
+    }
 
     // Session ID management for multi-turn conversation
     let currentSessionId = localStorage.getItem('finsage_session_id');
@@ -570,7 +612,8 @@
           body: JSON.stringify({
             prompt: text,
             session_id: currentSessionId,
-            user_id: 'default_user'
+            user_id: 'default_user',
+            model: activeModelKey
           })
         });
 
