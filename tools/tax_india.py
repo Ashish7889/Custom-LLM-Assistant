@@ -1,19 +1,21 @@
 """
 tools/tax_india.py -- Accurate Indian Income Tax Calculator & Personal CA Engine.
-Covers FY 2024-25 / AY 2025-26 rules for common people, salaried employees, and micro-entrepreneurs.
+Covers FY 2025-26 rules for common people, salaried employees, and micro-entrepreneurs.
 
 Key CA Rules Implemented:
 1. New Tax Regime (Default):
    - Standard Deduction: ₹75,000 (salaried).
-   - Section 87A Rebate: 100% tax rebate if taxable income <= ₹7,00,000 (paying ₹0 tax).
-     With standard deduction, gross income up to ₹7,75,000 pays ₹0 tax.
+   - Section 87A Rebate: 100% tax rebate if taxable income <= ₹12,00,000 (paying ₹0 tax).
+     With standard deduction, gross income up to ₹12,75,000 pays ₹0 tax.
    - Slabs:
-     0 - 3,00,000: Nil
-     3,00,001 - 7,00,000: 5%
-     7,00,001 - 10,00,000: 10%
-     10,00,001 - 12,00,000: 15%
-     12,00,001 - 15,00,000: 20%
-     Above 15,00,000: 30%
+     0 - 4,00,000: Nil
+     4,00,001 - 8,00,000: 5%
+     8,00,001 - 12,00,000: 10%
+     12,00,001 - 16,00,000: 15%
+     16,00,001 - 20,00,000: 20%
+     20,00,001 - 24,00,000: 25%
+     Above 24,00,000: 30%
+   - Marginal Relief under Section 87A: Tax payable cannot exceed excess income over ₹12,00,000.
 2. Old Tax Regime:
    - Standard Deduction: ₹50,000.
    - Section 87A Rebate: up to ₹12,500 if taxable income <= ₹5,00,000.
@@ -41,43 +43,54 @@ class TaxComparisonResult(BaseModel):
 
 
 def calculate_new_regime_tax(gross_income: float, is_salaried: bool = True) -> Dict[str, Any]:
-    """Calculate income tax under Budget 2024-25 New Tax Regime."""
+    """Calculate income tax under revised New Tax Regime (Section 87A rebate up to ₹12L taxable / ₹12.75L salaried gross)."""
     std_deduction = 75000.0 if is_salaried else 0.0
     taxable_income = max(0.0, gross_income - std_deduction)
 
     # Tax Slabs calculation
     tax = 0.0
-    if taxable_income <= 300000:
+    if taxable_income <= 400000:
         tax = 0.0
-    elif taxable_income <= 700000:
-        tax = (taxable_income - 300000) * 0.05
-    elif taxable_income <= 1000000:
-        tax = (400000 * 0.05) + (taxable_income - 700000) * 0.10
+    elif taxable_income <= 800000:
+        tax = (taxable_income - 400000) * 0.05
     elif taxable_income <= 1200000:
-        tax = (400000 * 0.05) + (300000 * 0.10) + (taxable_income - 1000000) * 0.15
-    elif taxable_income <= 1500000:
-        tax = (400000 * 0.05) + (300000 * 0.10) + (200000 * 0.15) + (taxable_income - 1200000) * 0.20
+        tax = (400000 * 0.05) + (taxable_income - 800000) * 0.10
+    elif taxable_income <= 1600000:
+        tax = (400000 * 0.05) + (400000 * 0.10) + (taxable_income - 1200000) * 0.15
+    elif taxable_income <= 2000000:
+        tax = (400000 * 0.05) + (400000 * 0.10) + (400000 * 0.15) + (taxable_income - 1600000) * 0.20
+    elif taxable_income <= 2400000:
+        tax = (400000 * 0.05) + (400000 * 0.10) + (400000 * 0.15) + (400000 * 0.20) + (taxable_income - 2000000) * 0.25
     else:
         tax = (
             (400000 * 0.05)
-            + (300000 * 0.10)
-            + (200000 * 0.15)
-            + (300000 * 0.20)
-            + (taxable_income - 1500000) * 0.30
+            + (400000 * 0.10)
+            + (400000 * 0.15)
+            + (400000 * 0.20)
+            + (400000 * 0.25)
+            + (taxable_income - 2400000) * 0.30
         )
 
-    # Section 87A Rebate: if taxable income <= 7,00,000, 100% tax rebate
+    # Section 87A Rebate: if taxable income <= 12,00,000, 100% tax rebate (₹0 tax)
     rebate_87a = 0.0
-    if taxable_income <= 700000:
+    marginal_relief = False
+    if taxable_income <= 1200000:
         rebate_87a = tax
         tax = 0.0
+    else:
+        # Section 87A Marginal Relief: tax cannot exceed excess income over ₹12,00,000
+        excess = taxable_income - 1200000
+        if tax > excess:
+            rebate_87a = tax - excess
+            tax = excess
+            marginal_relief = True
 
     # 4% Health & Education Cess
     cess = tax * 0.04
     total_tax = round(tax + cess, 2)
 
     return {
-        "regime": "New Tax Regime (FY 24-25)",
+        "regime": "New Tax Regime",
         "gross_income": gross_income,
         "standard_deduction": std_deduction,
         "taxable_income": taxable_income,
@@ -85,6 +98,7 @@ def calculate_new_regime_tax(gross_income: float, is_salaried: bool = True) -> D
         "rebate_87a": rebate_87a,
         "cess": cess,
         "total_tax": total_tax,
+        "marginal_relief_applied": marginal_relief,
     }
 
 
@@ -179,8 +193,8 @@ def compare_tax_regimes(
 
     if new_tax == 0:
         explanation = (
-            f"Under the New Tax Regime, your total tax is ₹0 due to the Section 87A rebate and "
-            f"₹{int(new_res['standard_deduction']):,} standard deduction. You save ₹{savings:,.2f}."
+            f"Under the New Tax Regime, your total tax is ₹0 due to the Section 87A rebate (zero tax on taxable income up to ₹12 Lakhs) and "
+            f"₹{int(new_res['standard_deduction']):,} standard deduction. You save ₹{savings:,.2f} compared to Old Regime."
         )
     else:
         explanation = (
@@ -197,4 +211,5 @@ def compare_tax_regimes(
         tax_savings=savings,
         itr_form_suggested=itr_form,
         explanation=f"{explanation} {itr_desc}",
+        marginal_relief_applied=new_res.get("marginal_relief_applied", False),
     )

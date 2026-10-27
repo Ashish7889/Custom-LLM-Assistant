@@ -564,19 +564,19 @@
         <div class="modal-section">
           <div style="font-size:13px; font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
             <span>🤖 FinSage Multi-Agent CA Practice</span>
-            <span class="adapter-badge ready">CUDA GPU Optimized</span>
+            <span id="hardwareBadge" class="adapter-badge ready" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3);">Cloud CPU · Verified CA Engine</span>
           </div>
           <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px; line-height:1.5;">
             <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border);">
-              <span><strong>Agent 1: Intake & Routing</strong> (TinyLlama 1.1B)</span>
+              <span><strong>Agent 1: Intake & Routing</strong> (Deterministic Classifier / TinyLlama)</span>
               <span class="adapter-badge ready" id="tinyBadge">Ready</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border);">
-              <span><strong>Agent 2: Junior CA Analyst</strong> (Qwen 2.5 1.5B)</span>
+              <span><strong>Agent 2: Junior CA Analyst</strong> (Tax & Debt Calculator / Qwen)</span>
               <span class="adapter-badge ready" id="qwenBadge">Ready</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
-              <span><strong>Agent 3: Senior Partner CA</strong> (DeepSeek-R1 Distill 1.5B)</span>
+              <span><strong>Agent 3: Senior Partner CA</strong> (Guardrails & Abstention / DeepSeek)</span>
               <span class="adapter-badge ready" id="dsBadge">Ready</span>
             </div>
           </div>
@@ -585,7 +585,7 @@
         <div class="modal-section">
           <div style="font-size:13px; font-weight:700; margin-bottom:8px;">📚 Grounded Indian Tax Training Dataset</div>
           <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:8px;">
-            208 high-precision scenarios covering Salaried Tax (Sec 115BAC / Old Regime), Freelancers (44ADA 50% profit), Capital Gains (112A LTCG / 111A STCG), Senior Citizens (80TTB), Form 16 / 26AS mismatch resolution, and Loan APR traps.
+            208 curated Indian tax scenarios used to train LoRA fine-tuning adapters for local GPU execution. The live cloud deployment executes verified deterministic CA math engines and statutory rules.
           </p>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px;">
             <div style="background:var(--bg-surface); padding:8px 10px; border-radius:6px; border:1px solid var(--border);">
@@ -600,13 +600,15 @@
         </div>
 
         <div class="modal-section">
-          <div style="font-size:13px; font-weight:700; margin-bottom:6px;">📑 Active Financial Document Parsers</div>
+          <div style="font-size:13px; font-weight:700; margin-bottom:6px;">📄 Supported Document Formats</div>
+          <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:6px;">
+            In-memory ingestion engine extracts tabular fields and salary details with prompt-injection sanitization. Chunks are strictly purged on session close.
+          </p>
           <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:11.5px; margin-top:6px;">
-            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">📄 Form 16 (Part A & B)</span>
-            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">📊 Form 26AS (TDS/TCS)</span>
-            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">🧾 ITR-1 / ITR-2 / ITR-4</span>
-            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">🏦 Bank Account Statements</span>
-            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">💰 Salary Payslips</span>
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">📄 PDF Documents (Form 16, Salary Slips, Reports)</span>
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">📝 DOCX & Word Documents</span>
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">📋 TXT & Markdown Notes</span>
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">🛡️ Prompt Injection & Sanitization Filter</span>
           </div>
         </div>
       </div>
@@ -642,7 +644,7 @@
               Ask me by typing or speaking about:
             </p>
             <ul style="font-size: 13px; color: var(--text-dim); margin-top: 8px; margin-left: 20px; line-height: 1.6;">
-              <li><strong>Income Tax & Rebate:</strong> Section 87A ₹0 tax rebate up to ₹7.75 Lakhs, New vs Old Regime.</li>
+              <li><strong>Income Tax & Rebate:</strong> Section 87A ₹0 tax rebate up to ₹12.75 Lakhs (salaried) / ₹12 Lakhs (gross), New vs Old Regime.</li>
               <li><strong>ITR Guidance:</strong> Choosing between ITR-1 Sahaj and ITR-4 Sugam for shopkeepers & gig workers.</li>
               <li><strong>Loan Trap Prevention:</strong> Exposing flat vs reducing interest rates & loan prepayment savings.</li>
               <li><strong>Government Schemes:</strong> PM-KISAN, Ayushman Bharat, Atal Pension Yojana (APY), and Sukanya Samriddhi.</li>
@@ -733,10 +735,21 @@
         const res = await fetch('/finetune/status');
         if (!res.ok) return;
         const data = await res.json();
+        const hwBadge = document.getElementById('hardwareBadge');
+        if (hwBadge) {
+          if (data.gpu_available) {
+            hwBadge.textContent = `CUDA GPU (${data.gpu_name || 'Active'})`;
+            hwBadge.style.color = '#34d399';
+          } else {
+            hwBadge.textContent = 'Cloud CPU Mode · Verified CA Engine';
+            hwBadge.style.color = '#60a5fa';
+          }
+        }
         if (data.adapters) {
-          if (tinyBadge) tinyBadge.textContent = data.adapters.tinyllama.ready ? `Ready (${data.adapters.tinyllama.size_mb} MB)` : 'Pending';
-          if (qwenBadge) qwenBadge.textContent = data.adapters.qwen_ca.ready ? `Ready (${data.adapters.qwen_ca.size_mb} MB)` : 'Pending';
-          if (dsBadge) dsBadge.textContent = data.adapters.deepseek_ca.ready ? `Ready (${data.adapters.deepseek_ca.size_mb} MB)` : 'Pending';
+          const mode = data.gpu_available ? 'Ready (GPU LoRA)' : 'Active (Cloud Engine)';
+          if (tinyBadge) tinyBadge.textContent = mode;
+          if (qwenBadge) qwenBadge.textContent = mode;
+          if (dsBadge) dsBadge.textContent = mode;
         }
         if (data.datasets) {
           if (qwenSamplesCount) qwenSamplesCount.textContent = `${data.datasets.qwen_junior_analyst} Samples`;
@@ -1292,13 +1305,12 @@
             content.appendChild(proofWrap);
           }
 
-          // Closing statutory disclaimer note
-          if (data.closing_note) {
-            const note = document.createElement('div');
-            note.className = 'closing-note';
-            note.textContent = data.closing_note;
-            content.appendChild(note);
-          }
+          // Closing statutory disclaimer note - guaranteed on every response
+          const disclaimerText = data.closing_note || 'This assessment is educational financial guidance based on official rates and does not constitute a statutory audit certificate.';
+          const note = document.createElement('div');
+          note.className = 'closing-note';
+          note.textContent = disclaimerText;
+          content.appendChild(note);
 
           // Add Audio Readout button to card
           const fullText = collectedText.join(' ');
