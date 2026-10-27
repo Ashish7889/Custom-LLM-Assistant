@@ -54,6 +54,7 @@ class OrchestratorStateMachine:
         state = OrchestratorState.INGEST
         repairs_attempted = 0
         repair_feedback: Optional[str] = None
+        previous_draft_signature: Optional[Tuple[str, ...]] = None
 
         sources: List[SourceChunk] = []
         tool_results: List[ToolResult] = []
@@ -90,8 +91,34 @@ class OrchestratorStateMachine:
         # Check if session has uploaded documents
         from retrieval.engine import doc_store
         from memory.db import db
+        from ingest.doc_intent import is_generic_doc_request, classify_document
+        from ingest.doc_facts import answer_from_facts, overview_from_facts
+        from tools.web_search import looks_financial
+
         uploaded_chunks = doc_store.get_chunks(session_id)
         has_uploaded_docs = bool(uploaded_chunks)
+
+        # Immediate out-of-scope answer for generic requests on non-financial documents
+        if has_uploaded_docs and is_generic_doc_request(clean_prompt):
+            doc_class = classify_document(uploaded_chunks)
+            if doc_class in ["resume", "other"]:
+                friendly_msg = (
+                    "This isn't a finance document, upload Form 16 / salary slip / AIS / loan statement."
+                )
+                yield StreamEvent(
+                    event_type="sentence",
+                    payload={"text": friendly_msg, "cites": [], "verified": True, "warning": None},
+                )
+                yield StreamEvent(
+                    event_type="done",
+                    payload={
+                        "abstain": False,
+                        "sentences": [{"text": friendly_msg, "cites": []}],
+                        "sources": [],
+                        "tool_results": [],
+                    },
+                )
+                return
 
         # Multi-turn pronoun and context resolution
         # E.g. "who can apply to it" -> resolve "it" to the entity in the previous message
@@ -267,7 +294,8 @@ class OrchestratorStateMachine:
                 )
 
             # 2. Live Internet Web Search for real-time facts and latest government rules
-            if web_search:
+            # Skip when session has uploaded docs, or query is not finance-related
+            if web_search and not has_uploaded_docs and looks_financial(resolved_prompt):
                 yield StreamEvent(
                     event_type="step",
                     payload={"state": "WEB_SEARCH", "description": f"Searching live internet for: {resolved_prompt[:42]}..."},
@@ -279,6 +307,79 @@ class OrchestratorStateMachine:
                         event_type="source_retrieved",
                         payload={"source_id": w_chunk.id, "source_name": w_chunk.source_name, "preview": w_chunk.text[:120] + "..."},
                     )
+
+        # -------------------------------------------------------------
+        # STEP 3c: TRY DOC FACTS (direct structured extraction)
+        # -------------------------------------------------------------
+        # If session has uploaded docs and route is document_qa or generic request, try doc_facts first
+        is_generic = is_generic_doc_request(clean_prompt)
+        if has_uploaded_docs and (route_decision.choice_id == "document_qa" or is_generic):
+            all_chunks = sources if sources else uploaded_chunks
+            doc_facts_res = overview_from_facts(all_chunks) if is_generic else answer_from_facts(clean_prompt, all_chunks)
+
+            if doc_facts_res:
+                mapped_sentences = []
+                for item in doc_facts_res:
+                    c_id = item["chunk_id"]
+                    # Ensure the cited chunks are in sources
+                    if not any(s.id == c_id for s in sources):
+                        for uc in uploaded_chunks:
+                            if uc.id == c_id:
+                                sources.append(uc)
+                                break
+                    mapped_sentences.append(SentenceItem(text=item["text"], cites=[c_id]))
+
+                draft = GeneratorOutput(abstain=False, sentences=mapped_sentences)
+
+                # Still run the verifier
+                state = OrchestratorState.VERIFY
+                yield StreamEvent(
+                    event_type="step",
+                    payload={"state": state.value, "description": "Verifying numeric claims & citations"},
+                )
+                verification = self.verifier.verify(draft, sources, tool_results)
+
+                if verification.passed:
+                    yield StreamEvent(
+                        event_type="verified",
+                        payload={"passed": True, "details": "Claims strictly grounded in sources and tools."},
+                    )
+                    final_state = OrchestratorState.RESPOND
+                    yield StreamEvent(
+                        event_type="step",
+                        payload={"state": final_state.value, "description": f"Delivering final verdict: {final_state.value}"},
+                    )
+                    for sent in draft.sentences:
+                        yield StreamEvent(
+                            event_type="sentence",
+                            payload={
+                                "text": sent.text,
+                                "cites": sent.cites,
+                                "verified": sent.verified,
+                                "warning": sent.warning,
+                            },
+                        )
+
+                    searched_sources = [
+                        {
+                            "id": s.id,
+                            "title": s.source_name,
+                            "page": s.page,
+                            "trusted_level": s.trusted_level,
+                            "date": s.date,
+                            "snippet": s.text[:120] + "...",
+                        }
+                        for s in sources
+                    ]
+                    done_payload = {
+                        "abstain": False,
+                        "sentences": [s.model_dump() for s in draft.sentences],
+                        "sources": searched_sources,
+                        "tool_results": [t.model_dump() for t in tool_results],
+                        "repairs_attempted": 0,
+                    }
+                    yield StreamEvent(event_type="done", payload=done_payload)
+                    return
 
         # -------------------------------------------------------------
         # STEP 4: GENERATE (JSON-grammar constrained)
@@ -330,12 +431,19 @@ class OrchestratorStateMachine:
                         elif c_str.startswith("S"):
                             m_digit = re.search(r"\d+", c_str)
                             if m_digit:
-                                cites.append(int(m_digit.group(0)))
+                                s_idx = int(m_digit.group(0))
+                                if 1 <= s_idx <= len(sources):
+                                    cites.append(sources[s_idx - 1].id)
+                                elif sources:
+                                    cites.append(sources[0].id)
                         else:
                             m_digit = re.search(r"\d+", c_str)
                             if m_digit:
                                 val = int(m_digit.group(0))
-                                cites.append(val if sources else 0)
+                                if 1 <= val <= len(sources):
+                                    cites.append(sources[val - 1].id)
+                                else:
+                                    cites.append(val if sources else 0)
                     mapped_sentences.append(SentenceItem(text=t, cites=cites))
 
                 if mapped_sentences:
@@ -344,6 +452,28 @@ class OrchestratorStateMachine:
                     draft = self.generator.draft(
                         clean_prompt, sources, tool_results, repair_feedback=repair_feedback
                     )
+
+            # Check if this draft is identical to previous failed draft (avoid useless repeat retries)
+            draft_signature = tuple(sent.text.strip() for sent in draft.sentences)
+            if previous_draft_signature is not None and draft_signature == previous_draft_signature:
+                state = OrchestratorState.ABSTAIN
+                abstain_text = (
+                    "I couldn't ground that answer in your document, so I won't guess. Try a specific question, for example 'what is the gross salary in this Form 16?'"
+                    if has_uploaded_docs
+                    else "I couldn't verify this answer against verified sources and calculations."
+                )
+                draft = GeneratorOutput(
+                    abstain=True,
+                    sentences=[SentenceItem(text=abstain_text, cites=[])],
+                )
+                yield StreamEvent(
+                    event_type="step",
+                    payload={
+                        "state": state.value,
+                        "description": "Draft identical to previous failed attempt; aborting repair loop.",
+                    },
+                )
+                break
 
             # ---------------------------------------------------------
             # STEP 5: VERIFY
@@ -357,6 +487,11 @@ class OrchestratorStateMachine:
             verification = self.verifier.verify(draft, sources, tool_results)
 
             if verification.passed or draft.abstain:
+                if draft.abstain and has_uploaded_docs:
+                    abstain_text = (
+                        "I couldn't ground that answer in your document, so I won't guess. Try a specific question, for example 'what is the gross salary in this Form 16?'"
+                    )
+                    draft.sentences = [SentenceItem(text=abstain_text, cites=[])]
                 yield StreamEvent(
                     event_type="verified",
                     payload={"passed": True, "details": "Claims strictly grounded in sources and tools."},
@@ -365,6 +500,7 @@ class OrchestratorStateMachine:
 
             # If verification failed, check repair budget
             repairs_attempted += 1
+            previous_draft_signature = draft_signature
             if repairs_attempted <= cfg.max_repairs:
                 state = OrchestratorState.REPAIR
                 repair_feedback = verification.feedback
@@ -379,11 +515,16 @@ class OrchestratorStateMachine:
             else:
                 # Exceeded repair budget -> force ABSTAIN
                 state = OrchestratorState.ABSTAIN
+                abstain_text = (
+                    "I couldn't ground that answer in your document, so I won't guess. Try a specific question, for example 'what is the gross salary in this Form 16?'"
+                    if has_uploaded_docs
+                    else "I couldn't verify this answer against verified sources and calculations."
+                )
                 draft = GeneratorOutput(
                     abstain=True,
                     sentences=[
                         SentenceItem(
-                            text="I couldn't verify this answer against verified sources and calculations.",
+                            text=abstain_text,
                             cites=[],
                         )
                     ],

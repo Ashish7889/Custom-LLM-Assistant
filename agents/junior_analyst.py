@@ -79,15 +79,39 @@ class JuniorAnalyst:
                     text = p if p.endswith(".") else f"{p}."
                     answer_sentences.append({"text": text, "cites": [cite_tag]})
 
+        # Check if sources contain direct factual answers to the client question
+        client_question = case.get("question", "")
+        if sources and not answer_sentences and client_question:
+            from ingest.doc_facts import answer_from_facts
+            matched = answer_from_facts(client_question, sources)
+            if matched:
+                for m in matched[:3]:
+                    source_idx = 1
+                    for s_i, s in enumerate(sources):
+                        s_id = getattr(s, "id", None) or (s.get("id") if isinstance(s, dict) else s_i + 1)
+                        if s_id == m["chunk_id"]:
+                            source_idx = s_i + 1
+                            break
+                    answer_sentences.append({"text": m["text"], "cites": [f"S{source_idx}"]})
+
         if sources and len(answer_sentences) < 5:
-            for idx, s in enumerate(sources[:2]):
+            q_words = set(re.findall(r"\b[a-z0-9]+\b", client_question.lower())) - {"what", "is", "the", "in", "a", "an", "of", "to"}
+            candidate_sentences = []
+            for idx, s in enumerate(sources):
                 cite_tag = f"S{idx+1}"
-                s_text = s.get("text", "")
+                s_text = getattr(s, "text", "") or (s.get("text", "") if isinstance(s, dict) else str(s))
                 s_parts = [p.strip() for p in re.split(r"(?<!\d)\.(?!\d)\s*", s_text) if p.strip()]
-                for p in s_parts[:2]:
-                    if len(answer_sentences) >= 5:
-                        break
-                    text = p if p.endswith(".") else f"{p}."
+                for p in s_parts:
+                    p_words = set(re.findall(r"\b[a-z0-9]+\b", p.lower()))
+                    overlap = len(q_words & p_words) if q_words else 1
+                    candidate_sentences.append((overlap, p, cite_tag))
+
+            candidate_sentences.sort(key=lambda x: x[0], reverse=True)
+            for _, p, cite_tag in candidate_sentences:
+                if len(answer_sentences) >= 4:
+                    break
+                text = p if p.endswith(".") else f"{p}."
+                if not any(a["text"] == text for a in answer_sentences):
                     answer_sentences.append({"text": text, "cites": [cite_tag]})
 
         # Conclude with one practical next step

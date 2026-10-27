@@ -27,10 +27,29 @@ def clean_html(raw_html: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+FINANCIAL_KEYWORDS = [
+    "tax", "itr", "income", "salary", "deduction", "80c", "80d", "87a",
+    "regime", "exemption", "allowance", "tds", "form 16", "ais", "26as",
+    "loan", "emi", "interest", "apr", "debt", "prepay", "cibil", "credit",
+    "scheme", "kisan", "pension", "yojana", "sukanya", "ppf", "epf", "nps",
+    "cagr", "dividend", "nifty", "sensex", "mutual fund", "sip", "investment",
+    "finance", "rupee", "inr", "lakh", "crore", "bank", "deposit", "savings",
+    "gross", "net pay", "provident fund", "capital gain", "gst", "inflation"
+]
+
+
+def looks_financial(query: str) -> bool:
+    """Check if query is related to personal finance, taxation, loans, or schemes."""
+    if not query:
+        return False
+    q_lower = query.lower()
+    return any(re.search(rf"\b{re.escape(kw)}\b", q_lower) for kw in FINANCIAL_KEYWORDS)
+
+
 def search_financial_web(query: str, max_results: int = 3, start_id: int = 1) -> List[SourceChunk]:
     """Search live web for evidence-grounded facts and regulations."""
     clean_query = query.strip()
-    if not clean_query:
+    if not clean_query or not looks_financial(clean_query):
         return []
 
     q_words = set(re.findall(r"\b\w{3,}\b", clean_query.lower())) - {
