@@ -229,3 +229,52 @@ async def delete_session(session_id: str, user_id: str = Query("default_user")):
     # Clean up memory document store for this session
     doc_store.delete_session(session_id)
     return {"success": True, "message": "Session and uploaded documents deleted."}
+
+
+@router.get("/sessions/{session_id}/messages")
+async def get_session_messages(session_id: str, user_id: str = Query("default_user")):
+    """Retrieve message history for a specific session."""
+    messages = db.get_messages(session_id, user_id)
+    return messages
+
+
+@router.get("/finetune/status")
+async def finetune_status():
+    """Retrieve fine-tuning status and adapter readiness."""
+    adapters_dir = BASE_DIR / "adapters"
+    tiny_path = adapters_dir / "tinyllama_ca" / "adapter_model.safetensors"
+    qwen_path = adapters_dir / "qwen_ca" / "adapter_model.safetensors"
+    deepseek_path = adapters_dir / "deepseek_ca" / "adapter_model.safetensors"
+    
+    qwen_train_file = BASE_DIR / "data" / "qwen_junior_analyst_train.jsonl"
+    deepseek_train_file = BASE_DIR / "data" / "deepseek_senior_partner_train.jsonl"
+    
+    qwen_samples = 0
+    if qwen_train_file.exists():
+        try:
+            with open(qwen_train_file, "r", encoding="utf-8") as f:
+                qwen_samples = sum(1 for line in f if line.strip())
+        except Exception:
+            pass
+        
+    deepseek_samples = 0
+    if deepseek_train_file.exists():
+        try:
+            with open(deepseek_train_file, "r", encoding="utf-8") as f:
+                deepseek_samples = sum(1 for line in f if line.strip())
+        except Exception:
+            pass
+
+    return {
+        "adapters": {
+            "tinyllama": {"ready": tiny_path.exists(), "size_mb": round(tiny_path.stat().st_size / 1024 / 1024, 2) if tiny_path.exists() else 0},
+            "qwen_ca": {"ready": qwen_path.exists(), "size_mb": round(qwen_path.stat().st_size / 1024 / 1024, 2) if qwen_path.exists() else 0},
+            "deepseek_ca": {"ready": deepseek_path.exists(), "size_mb": round(deepseek_path.stat().st_size / 1024 / 1024, 2) if deepseek_path.exists() else 0},
+        },
+        "datasets": {
+            "qwen_junior_analyst": qwen_samples,
+            "deepseek_senior_partner": deepseek_samples,
+        },
+        "gpu_available": torch.cuda.is_available(),
+        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "None",
+    }

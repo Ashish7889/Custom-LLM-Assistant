@@ -202,4 +202,37 @@ class DocumentIngestionEngine:
         else:
             pages = self.parse_txt(content_bytes, filename)
 
+        full_text = "\n".join(text for text, _ in pages)
+        lower_name = filename.lower()
+
+        # Specialized Form 26AS detection
+        try:
+            from ingest.form26as_parser import is_form26as, parse_form26as
+            if "26as" in lower_name or is_form26as(full_text):
+                chunks = parse_form26as(full_text, filename)
+                if chunks:
+                    return chunks
+        except Exception:
+            pass
+
+        # Specialized ITR detection
+        try:
+            from ingest.itr_parser import is_itr_document, parse_itr
+            if "itr" in lower_name or is_itr_document(full_text):
+                chunks = parse_itr(full_text, filename)
+                if chunks:
+                    return chunks
+        except Exception:
+            pass
+
+        # Specialized Bank Statement detection
+        try:
+            from ingest.bank_stmt_parser import is_bank_statement, parse_bank_statement
+            if any(k in lower_name for k in ["bank", "statement", "passbook"]) or is_bank_statement(full_text):
+                chunks = parse_bank_statement(full_text, filename)
+                if chunks:
+                    return chunks
+        except Exception:
+            pass
+
         return self.chunk_text(pages, filename, start_chunk_id=start_chunk_id)

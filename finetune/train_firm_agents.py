@@ -43,9 +43,9 @@ def train_agent(
     lr: float = 2e-4,
 ):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print("=" * 65)
-    print(f"FinSage Multi-Agent Fine-Tuning: Agent={agent_type.upper()} on {device}")
-    print("=" * 65)
+    print("=" * 65, flush=True)
+    print(f"FinSage Multi-Agent Fine-Tuning: Agent={agent_type.upper()} on {device}", flush=True)
+    print("=" * 65, flush=True)
 
     if agent_type == "senior":
         model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
@@ -56,13 +56,13 @@ def train_agent(
         data_path = DATA_DIR / "qwen_junior_analyst_train.jsonl"
         out_dir = ADAPTERS_DIR / "qwen_ca"
 
-    print(f"Loading tokenizer: {model_name}...")
+    print(f"Loading tokenizer: {model_name}...", flush=True)
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     # Load and encode data
-    print(f"Loading training data from {data_path}...")
+    print(f"Loading training data from {data_path}...", flush=True)
     with open(data_path, "r", encoding="utf-8") as f:
         raw_items = [json.loads(line) for line in f if line.strip()]
 
@@ -93,14 +93,14 @@ def train_agent(
         labels = input_ids.clone()
         encoded_samples.append((input_ids, mask, labels))
 
-    print(f"Total training samples: {len(encoded_samples)}")
+    print(f"Total training samples: {len(encoded_samples)}", flush=True)
 
     # Clear GPU VRAM before model load
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    print(f"Loading base model: {model_name}...")
+    print(f"Loading base model: {model_name}...", flush=True)
     dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
@@ -110,6 +110,8 @@ def train_agent(
     )
     model.config.use_cache = False
     model.gradient_checkpointing_enable()
+    if hasattr(model, "enable_input_require_grads"):
+        model.enable_input_require_grads()
 
     # LoRA Configuration
     lora_config = LoraConfig(
@@ -122,7 +124,7 @@ def train_agent(
     )
     model = get_peft_model(model, lora_config)
     tr_params, tot_params = model.get_nb_trainable_parameters()
-    print(f"Trainable LoRA Parameters: {tr_params:,} / {tot_params:,} ({100*tr_params/tot_params:.2f}%)")
+    print(f"Trainable LoRA Parameters: {tr_params:,} / {tot_params:,} ({100*tr_params/tot_params:.2f}%)", flush=True)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=5, num_training_steps=max_steps)
@@ -131,7 +133,7 @@ def train_agent(
     step = 0
     running_loss = 0.0
 
-    print("\nStarting Training Loop...")
+    print("\nStarting Training Loop...", flush=True)
     while step < max_steps:
         for idx in range(0, len(encoded_samples), batch_size):
             batch = encoded_samples[idx : idx + batch_size]
@@ -168,16 +170,16 @@ def train_agent(
 
                 if step % 5 == 0 or step == max_steps:
                     avg_loss = running_loss / 5.0
-                    print(f"Step [{step}/{max_steps}] | Loss: {avg_loss:.4f} | LR: {scheduler.get_last_lr()[0]:.2e}")
+                    print(f"Step [{step}/{max_steps}] | Loss: {avg_loss:.4f} | LR: {scheduler.get_last_lr()[0]:.2e}", flush=True)
                     running_loss = 0.0
 
                 if step >= max_steps:
                     break
 
-    print(f"\nTraining completed! Saving LoRA adapter to {out_dir}...")
+    print(f"\nTraining completed! Saving LoRA adapter to {out_dir}...", flush=True)
     model.save_pretrained(str(out_dir))
     tokenizer.save_pretrained(str(out_dir))
-    print(f"[OK] Adapter successfully saved to {out_dir}")
+    print(f"[OK] Adapter successfully saved to {out_dir}", flush=True)
 
     # Clean VRAM
     del model

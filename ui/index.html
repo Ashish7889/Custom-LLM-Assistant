@@ -370,15 +370,160 @@
     .closing-note {
       margin-top: 8px; font-size: 11px; color: var(--text-dim); font-style: italic;
     }
+
+    /* Collapsible Left Sidebar */
+    .sidebar-panel {
+      width: 250px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: width 0.2s ease, opacity 0.2s ease;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .sidebar-panel.collapsed {
+      width: 0;
+      opacity: 0;
+      border-right: none;
+    }
+    .sidebar-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .sidebar-sessions {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .session-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      user-select: none;
+    }
+    .session-item:hover {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+    .session-item.active {
+      background: rgba(99, 102, 241, 0.12);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      font-weight: 600;
+    }
+    .session-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      margin-right: 6px;
+    }
+    .session-del-btn {
+      opacity: 0;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    .session-item:hover .session-del-btn {
+      opacity: 1;
+    }
+    .session-del-btn:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.15);
+    }
+    .sidebar-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Modal Overlay & Dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 92%;
+      max-width: 640px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .adapter-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+    }
+    .adapter-badge.ready {
+      background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .adapter-badge.pending {
+      background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3);
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand">
-      <div class="brand-logo">✦</div>
-      <div class="brand-name">FinSage</div>
-      <span class="brand-tag">Personal Chartered Accountant</span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button class="btn-icon" id="sidebarToggle" title="Toggle Consultation History">☰</button>
+      <div class="brand">
+        <div class="brand-logo">✦</div>
+        <div class="brand-name">FinSage</div>
+        <span class="brand-tag">Personal Chartered Accountant</span>
+      </div>
     </div>
 
     <div class="header-controls">
@@ -386,8 +531,10 @@
         <select id="modelSelector" class="model-dropdown" title="Select Neural CA Model">
           <option value="tinyllama">🧠 TinyLlama 1.1B CA</option>
           <option value="qwen">⚡ Qwen 2.5 1.5B CA</option>
+          <option value="deepseek_r1">🎯 DeepSeek-R1 Distill 1.5B CA</option>
         </select>
       </div>
+      <button class="btn-icon" id="finetuneBtn" title="View Fine-Tuning & Multi-Agent Architecture Status">⚡ Models & Adapters</button>
       <button class="web-toggle active" id="webSearchToggle" title="Toggle Live Internet Web Search Grounding">
         <span id="webSearchIcon">🌐</span> <span id="webSearchLabel">Web: ON</span>
       </button>
@@ -403,7 +550,87 @@
     </div>
   </header>
 
+  <!-- Fine-Tune Monitor Modal -->
+  <div id="finetuneModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">⚡</span>
+          <h3 style="font-size:15px; font-weight:700;">FinSage LoRA Fine-Tuning & Multi-Agent Architecture</h3>
+        </div>
+        <button id="closeModalBtn" class="btn-icon" style="padding:2px 8px; font-size:14px;">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <div class="modal-section">
+          <div style="font-size:13px; font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <span>🤖 FinSage Multi-Agent CA Practice</span>
+            <span class="adapter-badge ready">CUDA GPU Optimized</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px; line-height:1.5;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border);">
+              <span><strong>Agent 1: Intake & Routing</strong> (TinyLlama 1.1B)</span>
+              <span class="adapter-badge ready" id="tinyBadge">Ready</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border);">
+              <span><strong>Agent 2: Junior CA Analyst</strong> (Qwen 2.5 1.5B)</span>
+              <span class="adapter-badge ready" id="qwenBadge">Ready</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
+              <span><strong>Agent 3: Senior Partner CA</strong> (DeepSeek-R1 Distill 1.5B)</span>
+              <span class="adapter-badge ready" id="dsBadge">Ready</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div style="font-size:13px; font-weight:700; margin-bottom:8px;">📚 Grounded Indian Tax Training Dataset</div>
+          <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:8px;">
+            208 high-precision scenarios covering Salaried Tax (Sec 115BAC / Old Regime), Freelancers (44ADA 50% profit), Capital Gains (112A LTCG / 111A STCG), Senior Citizens (80TTB), Form 16 / 26AS mismatch resolution, and Loan APR traps.
+          </p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px;">
+            <div style="background:var(--bg-surface); padding:8px 10px; border-radius:6px; border:1px solid var(--border);">
+              <div style="color:var(--text-dim); font-size:11px;">Qwen Analyst Dataset</div>
+              <div style="font-size:14px; font-weight:700; color:#818cf8;" id="qwenSamplesCount">208 Samples</div>
+            </div>
+            <div style="background:var(--bg-surface); padding:8px 10px; border-radius:6px; border:1px solid var(--border);">
+              <div style="color:var(--text-dim); font-size:11px;">DeepSeek Senior Dataset</div>
+              <div style="font-size:14px; font-weight:700; color:#34d399;" id="dsSamplesCount">208 Samples</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div style="font-size:13px; font-weight:700; margin-bottom:6px;">📑 Active Financial Document Parsers</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:11.5px; margin-top:6px;">
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">📄 Form 16 (Part A & B)</span>
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">📊 Form 26AS (TDS/TCS)</span>
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">🧾 ITR-1 / ITR-2 / ITR-4</span>
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">🏦 Bank Account Statements</span>
+            <span style="background:var(--bg-surface); padding:3px 8px; border-radius:6px; border:1px solid var(--border);">💰 Salary Payslips</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="app-main">
+    <!-- Collapsible Left Sidebar for Session History -->
+    <div class="sidebar-panel" id="sidebarPanel">
+      <div class="sidebar-header">
+        <span>Consultations</span>
+        <button class="btn-icon" id="sidebarNewChatBtn" style="padding:2px 6px; font-size:11px;" title="New Consultation">＋ New</button>
+      </div>
+      <div class="sidebar-sessions" id="sidebarSessionsList">
+        <!-- Injected session items -->
+      </div>
+      <div class="sidebar-footer">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--success);"></span>
+          <span>FinSage Multi-Agent Active</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Chat Center -->
     <div class="chat-panel">
       <div class="messages-container" id="chatArea">
@@ -476,10 +703,64 @@
     const modelSelector = document.getElementById('modelSelector');
     const webSearchToggle = document.getElementById('webSearchToggle');
     const webSearchBtn = document.getElementById('webSearchBtn');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarPanel = document.getElementById('sidebarPanel');
+    const sidebarSessionsList = document.getElementById('sidebarSessionsList');
+    const sidebarNewChatBtn = document.getElementById('sidebarNewChatBtn');
+    const finetuneBtn = document.getElementById('finetuneBtn');
+    const finetuneModal = document.getElementById('finetuneModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const tinyBadge = document.getElementById('tinyBadge');
+    const qwenBadge = document.getElementById('qwenBadge');
+    const dsBadge = document.getElementById('dsBadge');
+    const qwenSamplesCount = document.getElementById('qwenSamplesCount');
+    const dsSamplesCount = document.getElementById('dsSamplesCount');
 
     let isBusy = false;
     let ttsEnabled = true;
     let webSearchEnabled = localStorage.getItem('finsage_web_search') !== 'false';
+
+    // Sidebar Toggle
+    if (sidebarToggle && sidebarPanel) {
+      sidebarToggle.addEventListener('click', () => {
+        sidebarPanel.classList.toggle('collapsed');
+      });
+    }
+
+    // Modal Events
+    async function updateFinetuneStatus() {
+      try {
+        const res = await fetch('/finetune/status');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.adapters) {
+          if (tinyBadge) tinyBadge.textContent = data.adapters.tinyllama.ready ? `Ready (${data.adapters.tinyllama.size_mb} MB)` : 'Pending';
+          if (qwenBadge) qwenBadge.textContent = data.adapters.qwen_ca.ready ? `Ready (${data.adapters.qwen_ca.size_mb} MB)` : 'Pending';
+          if (dsBadge) dsBadge.textContent = data.adapters.deepseek_ca.ready ? `Ready (${data.adapters.deepseek_ca.size_mb} MB)` : 'Pending';
+        }
+        if (data.datasets) {
+          if (qwenSamplesCount) qwenSamplesCount.textContent = `${data.datasets.qwen_junior_analyst} Samples`;
+          if (dsSamplesCount) dsSamplesCount.textContent = `${data.datasets.deepseek_senior_partner} Samples`;
+        }
+      } catch (e) {
+        console.warn('Finetune status fetch failed:', e);
+      }
+    }
+
+    if (finetuneBtn && finetuneModal) {
+      finetuneBtn.addEventListener('click', () => {
+        finetuneModal.style.display = 'flex';
+        updateFinetuneStatus();
+      });
+    }
+    if (closeModalBtn && finetuneModal) {
+      closeModalBtn.addEventListener('click', () => {
+        finetuneModal.style.display = 'none';
+      });
+      finetuneModal.addEventListener('click', (e) => {
+        if (e.target === finetuneModal) finetuneModal.style.display = 'none';
+      });
+    }
 
     function updateWebSearchUI() {
       if (webSearchEnabled) {
@@ -540,28 +821,107 @@
       localStorage.setItem('finsage_session_id', currentSessionId);
     }
 
-    if (newChatBtn) {
-      newChatBtn.addEventListener('click', () => {
-        currentSessionId = 'session_' + Math.random().toString(36).substring(2, 10);
-        localStorage.setItem('finsage_session_id', currentSessionId);
-        if (attachedDocsBar) attachedDocsBar.style.display = 'none';
-        chatArea.innerHTML = `
-          <div class="message assistant">
-            <div class="assistant-card">
-              <h3 style="font-size: 15px; margin-bottom: 6px;">Namaste! Welcome to FinSage 🇮🇳</h3>
-              <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
-                Started a new consultation session. Ask me about income tax, ITR forms, loan rates, or government schemes!
-              </p>
-            </div>
-          </div>
-        `;
-        sourceInspector.innerHTML = `
-          <div style="font-size: 12px; color: var(--text-dim); text-align: center; padding: 30px 10px;">
-            Active citations and verified passages will appear here as you chat.
-          </div>
-        `;
-      });
+    async function loadSessions() {
+      if (!sidebarSessionsList) return;
+      try {
+        const res = await fetch('/sessions?user_id=default_user');
+        if (!res.ok) return;
+        const sessions = await res.json();
+        sidebarSessionsList.innerHTML = '';
+        if (sessions.length === 0) {
+          sidebarSessionsList.innerHTML = '<div style="font-size:11.5px; color:var(--text-dim); text-align:center; padding:16px;">No saved sessions</div>';
+          return;
+        }
+        sessions.forEach(sess => {
+          const item = document.createElement('div');
+          item.className = 'session-item' + (sess.session_id === currentSessionId ? ' active' : '');
+          item.innerHTML = `
+            <span class="session-title" title="${sess.title || sess.session_id}">${sess.title || 'Consultation'}</span>
+            <button class="session-del-btn" title="Delete Consultation">🗑</button>
+          `;
+          item.querySelector('.session-title').addEventListener('click', () => {
+            selectSession(sess.session_id);
+          });
+          item.querySelector('.session-del-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (confirm('Delete this consultation session?')) {
+              await fetch(`/sessions/${sess.session_id}?user_id=default_user`, { method: 'DELETE' });
+              if (currentSessionId === sess.session_id) {
+                startNewChat();
+              } else {
+                loadSessions();
+              }
+            }
+          });
+          sidebarSessionsList.appendChild(item);
+        });
+      } catch (e) {
+        console.warn('Failed to load sessions:', e);
+      }
     }
+
+    async function selectSession(sessId) {
+      currentSessionId = sessId;
+      localStorage.setItem('finsage_session_id', currentSessionId);
+      loadSessions();
+      if (attachedDocsBar) attachedDocsBar.style.display = 'none';
+      chatArea.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-dim); font-size:13px;">Loading conversation history...</div>';
+      try {
+        const res = await fetch(`/sessions/${sessId}/messages?user_id=default_user`);
+        if (!res.ok) throw new Error('Failed to load messages');
+        const msgs = await res.json();
+        chatArea.innerHTML = '';
+        if (msgs.length === 0) {
+          chatArea.innerHTML = `
+            <div class="message assistant">
+              <div class="assistant-card">
+                <h3 style="font-size: 15px; margin-bottom: 6px;">Namaste! Welcome to FinSage 🇮🇳</h3>
+                <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">Consultation session ready.</p>
+              </div>
+            </div>`;
+          return;
+        }
+        msgs.forEach(m => {
+          if (m.role === 'user') {
+            appendUserMessage(m.content);
+          } else {
+            const cardObj = createAssistantCard();
+            cardObj.contentBox.innerHTML = `<div class="sentence-block">${m.content}</div>`;
+            chatArea.scrollTop = chatArea.scrollHeight;
+          }
+        });
+      } catch (err) {
+        chatArea.innerHTML = `<div style="color:var(--danger); padding:20px;">Could not load session history.</div>`;
+      }
+    }
+
+    function startNewChat() {
+      currentSessionId = 'session_' + Math.random().toString(36).substring(2, 10);
+      localStorage.setItem('finsage_session_id', currentSessionId);
+      if (attachedDocsBar) attachedDocsBar.style.display = 'none';
+      chatArea.innerHTML = `
+        <div class="message assistant">
+          <div class="assistant-card">
+            <h3 style="font-size: 15px; margin-bottom: 6px;">Namaste! Welcome to FinSage 🇮🇳</h3>
+            <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
+              Started a new consultation session. Ask me about income tax, ITR forms, loan rates, or government schemes!
+            </p>
+          </div>
+        </div>
+      `;
+      sourceInspector.innerHTML = `
+        <div style="font-size: 12px; color: var(--text-dim); text-align: center; padding: 30px 10px;">
+          Active citations and verified passages will appear here as you chat.
+        </div>
+      `;
+      loadSessions();
+    }
+
+    if (newChatBtn) newChatBtn.addEventListener('click', startNewChat);
+    if (sidebarNewChatBtn) sidebarNewChatBtn.addEventListener('click', startNewChat);
+
+    // Initial sessions load
+    loadSessions();
 
     // Theme toggle
     themeToggle.addEventListener('click', () => {
@@ -958,6 +1318,7 @@
         }
       }
       chatArea.scrollTop = chatArea.scrollHeight;
+      loadSessions();
     }
 
     function renderSource(src) {
