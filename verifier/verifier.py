@@ -20,9 +20,9 @@ class ResponseVerifier:
         self.decision_engine = decision_engine
 
     def _extract_all_numbers(self, text: str) -> Set[str]:
-        """Extract all numeric entities: percentages, currencies, floats, ints."""
-        # Clean currency symbols and commas
-        cleaned = text.replace(",", "")
+        # Protect statutory form, act, and section identifiers (e.g. Form 16, Section 80C) from arithmetic checks
+        cleaned = re.sub(r"\b(?:Form\s*16[A-Z]?|Form\s*26AS|Section\s*\d+[A-Z]?|Sec\s*\d+[A-Z]?|ITR-?\s*\d+)\b", " ", text, flags=re.IGNORECASE)
+        cleaned = cleaned.replace(",", "")
         # Find raw numeric patterns: 12.5, 12, 100%, $50.2
         raw_nums = re.findall(r"\b\d+(?:\.\d+)?\b", cleaned)
         nums = set()

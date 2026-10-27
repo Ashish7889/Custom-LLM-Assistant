@@ -301,6 +301,75 @@
     }
     .source-title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
     .source-snippet { color: var(--text-muted); line-height: 1.5; font-family: var(--font-mono); }
+
+    /* 3-Agent Practice Badges */
+    .firm-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; padding: 4px 10px;
+      border-radius: 6px; margin: 4px 4px 6px 0;
+      letter-spacing: 0.2px;
+    }
+    .firm-badge.intake {
+      background: rgba(245, 158, 11, 0.12); color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .firm-badge.analyst {
+      background: rgba(99, 102, 241, 0.12); color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .firm-badge.senior {
+      background: rgba(16, 185, 129, 0.12); color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Expandable <think> Accordion */
+    .think-accordion {
+      margin-top: 10px; border-radius: 8px;
+      background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden; font-size: 12px;
+    }
+    .think-accordion summary {
+      padding: 8px 12px; font-weight: 600; cursor: pointer;
+      color: #94a3b8; user-select: none; display: flex; align-items: center; gap: 6px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .think-accordion summary:hover { color: #f1f5f9; background: rgba(255, 255, 255, 0.05); }
+    .think-content {
+      padding: 10px 14px; font-family: var(--font-mono); font-size: 11px;
+      color: #cbd5e1; white-space: pre-wrap; line-height: 1.5;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Notice Risk Card */
+    .notice-risk-card {
+      margin-top: 12px; padding: 12px; border-radius: 8px;
+      font-size: 12px; line-height: 1.5;
+    }
+    .notice-risk-card.low {
+      background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); color: #34d399;
+    }
+    .notice-risk-card.medium {
+      background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); color: #fbbf24;
+    }
+    .notice-risk-card.high {
+      background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171;
+    }
+    .notice-risk-title { font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .notice-risk-list { margin-left: 18px; color: var(--text-muted); font-size: 11.5px; }
+
+    /* Official Portal Proof Badges */
+    .official-proof-wrap {
+      margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    }
+    .official-proof-link {
+      display: inline-flex; align-items: center; gap: 5px; font-size: 11px;
+      color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 3px 8px; border-radius: 6px; text-decoration: none; transition: all 0.15s ease;
+    }
+    .official-proof-link:hover { background: rgba(56, 189, 248, 0.2); }
+    .closing-note {
+      margin-top: 8px; font-size: 11px; color: var(--text-dim); font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -804,6 +873,15 @@
         content.appendChild(span);
       } else if (event === 'source_retrieved') {
         renderSource(data);
+      } else if (event === 'agent_memo') {
+        const agent = data.agent || 'intake';
+        const badge = document.createElement('div');
+        badge.className = `firm-badge ${agent}`;
+        const icon = agent === 'intake' ? '⚡' : (agent === 'analyst' ? '📊' : '🎓');
+        const label = data.title || agent.toUpperCase();
+        let detail = data.ack || (data.memo && data.memo.type ? `[Memo: ${data.memo.type}]` : '');
+        badge.innerHTML = `${icon} <b>${escapeHtml(label)}</b>: ${escapeHtml(detail)}`;
+        timeline.appendChild(badge);
       } else if (event === 'done') {
         if (data.abstain) {
           const ab = document.createElement('div');
@@ -812,6 +890,56 @@
           <div style="font-size:12.5px; color:var(--text-muted)">The assistant abstained because facts could not be verified against trusted sources.</div>`;
           content.appendChild(ab);
         } else {
+          // Render Senior Partner <think> reasoning accordion
+          if (data.think) {
+            const thinkBox = document.createElement('details');
+            thinkBox.className = 'think-accordion';
+            thinkBox.innerHTML = `
+              <summary>🧠 Senior Partner Reasoning & Scrutiny Audit (&lt;think&gt;)</summary>
+              <div class="think-content">${escapeHtml(data.think)}</div>
+            `;
+            content.appendChild(thinkBox);
+          }
+
+          // Render Notice Risk Assessment Card
+          if (data.notice_risk && data.notice_risk.level) {
+            const risk = data.notice_risk;
+            const riskBox = document.createElement('div');
+            riskBox.className = `notice-risk-card ${risk.level}`;
+            const icon = risk.level === 'low' ? '🛡️' : (risk.level === 'medium' ? '⚠️' : '🚨');
+            const factorsHtml = (risk.factors || []).map(f => `<li>${escapeHtml(f.factor)} <i>(${escapeHtml(f.cite || '')})</i></li>`).join('');
+            const todoHtml = (risk.what_to_do || []).map(w => `<li>${escapeHtml(w)}</li>`).join('');
+            riskBox.innerHTML = `
+              <div class="notice-risk-title">${icon} Scrutiny & Notice Risk Rating: ${escapeHtml(risk.level.toUpperCase())}</div>
+              ${factorsHtml ? `<ul class="notice-risk-list">${factorsHtml}</ul>` : ''}
+              ${todoHtml ? `<div style="margin-top:6px; font-weight:600;">Recommended Safeguards:</div><ul class="notice-risk-list">${todoHtml}</ul>` : ''}
+            `;
+            content.appendChild(riskBox);
+          }
+
+          // Render Official Proof Links
+          if (data.official_proof && data.official_proof.length > 0) {
+            const proofWrap = document.createElement('div');
+            proofWrap.className = 'official-proof-wrap';
+            data.official_proof.forEach(p => {
+              const link = document.createElement('a');
+              link.className = 'official-proof-link';
+              link.href = p.url || '#';
+              link.target = '_blank';
+              link.innerHTML = `🏛️ ${escapeHtml(p.claim || 'Official Verification Portal')}`;
+              proofWrap.appendChild(link);
+            });
+            content.appendChild(proofWrap);
+          }
+
+          // Closing statutory disclaimer note
+          if (data.closing_note) {
+            const note = document.createElement('div');
+            note.className = 'closing-note';
+            note.textContent = data.closing_note;
+            content.appendChild(note);
+          }
+
           // Add Audio Readout button to card
           const fullText = collectedText.join(' ');
           if (fullText) {

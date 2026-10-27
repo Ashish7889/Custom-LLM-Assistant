@@ -4,8 +4,12 @@ Defines hardware settings, paths, limits, model configurations, and decision bac
 """
 
 import os
+import sys
 from pathlib import Path
 from pydantic import BaseModel, Field
+
+# Prevent Windows Python 3.13 pyarrow Cython access-violation crash during dynamic imports
+sys.modules["pyarrow"] = None
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -17,9 +21,9 @@ class FinSageConfig(BaseModel):
     port: int = 8000
     debug: bool = False
 
-    # Hardware & Model Architecture (Dual Model: TinyLlama + Qwen)
+    # Hardware & Model Architecture (3-Tier Multi-Agent: TinyLlama + Qwen + DeepSeek-R1)
     device: str = "cuda" if os.environ.get("USE_CUDA", "1") == "1" else "cpu"
-    active_model: str = os.environ.get("FINSAGE_MODEL", "tinyllama")  # "tinyllama" or "qwen"
+    active_model: str = os.environ.get("FINSAGE_MODEL", "tinyllama")  # "tinyllama", "qwen", or "deepseek_r1"
     
     # Model Registry
     models: dict = {
@@ -36,6 +40,13 @@ class FinSageConfig(BaseModel):
             "ca_adapter_path": BASE_DIR / "adapters" / "qwen_ca",
             "template": "chatml",
             "load_in_4bit": True,   # Qwen loaded in 4-bit via bitsandbytes (~1.2GB)
+        },
+        "deepseek_r1": {
+            "name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+            "adapter_path": None,
+            "ca_adapter_path": None,
+            "template": "deepseek_r1",
+            "load_in_4bit": True,   # DeepSeek-R1 1.5B loaded in 4-bit (~1.3GB)
         },
     }
 

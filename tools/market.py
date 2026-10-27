@@ -11,11 +11,7 @@ import time
 import logging
 from typing import Dict, Any, Optional
 
-try:
-    import yfinance as yf
-    YFINANCE_AVAILABLE = True
-except ImportError:
-    YFINANCE_AVAILABLE = False
+# yfinance is lazy-loaded on demand to avoid Windows Python 3.13 pyarrow import crashes
 
 logger = logging.getLogger("finsage.market")
 
@@ -44,7 +40,9 @@ def get_real_stock_price(ticker: str) -> Dict[str, Any]:
     """Fetch real-time stock price from yfinance with caching.
     Strictly raises MarketDataError if lookup fails (NO SIMULATED DATA).
     """
-    if not YFINANCE_AVAILABLE:
+    try:
+        import yfinance as yf
+    except ImportError:
         raise MarketDataError("yfinance package is not installed on this server.")
 
     norm_ticker = normalize_ticker(ticker)
@@ -103,8 +101,9 @@ def get_real_stock_price(ticker: str) -> Dict[str, Any]:
 
 
 def get_real_financial_metrics(ticker: str) -> Dict[str, Any]:
-    """Fetch verified valuation metrics (P/E, Market Cap, Revenue, Margins)."""
-    if not YFINANCE_AVAILABLE:
+    try:
+        import yfinance as yf
+    except ImportError:
         raise MarketDataError("yfinance package is not installed.")
 
     norm_ticker = normalize_ticker(ticker)

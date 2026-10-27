@@ -44,6 +44,8 @@ class OrchestratorStateMachine:
         self.generator = generator or StructuredGenerator()
         self.verifier = verifier or ResponseVerifier(self.decision_engine)
         self.knowledge_base = load_finance_knowledge_base(str(cfg.knowledge_base_path))
+        from agents.firm_engine import FinSageFirm
+        self.firm = FinSageFirm(generator=self.generator)
 
     def run(
         self, prompt: str, session_id: str, user_id: str, web_search: bool = True
@@ -72,6 +74,18 @@ class OrchestratorStateMachine:
                 event_type="error", payload={"message": "Empty query provided"}
             )
             return
+
+        # Intake Clerk (Agent 1: TinyLlama) performs instant triage and ack
+        facts_memo = self.firm.intake(clean_prompt)
+        yield StreamEvent(
+            event_type="agent_memo",
+            payload={
+                "agent": "intake",
+                "title": "TinyLlama 1.1B • Intake Clerk",
+                "memo": facts_memo,
+                "ack": facts_memo.get("content", {}).get("ack", ""),
+            },
+        )
 
         # Check if session has uploaded documents
         from retrieval.engine import doc_store
@@ -269,6 +283,7 @@ class OrchestratorStateMachine:
         # -------------------------------------------------------------
         # STEP 4: GENERATE (JSON-grammar constrained)
         # -------------------------------------------------------------
+        final_memo = None
         while True:
             state = OrchestratorState.GENERATE
             yield StreamEvent(
@@ -279,9 +294,56 @@ class OrchestratorStateMachine:
                 },
             )
 
-            draft = self.generator.draft(
-                clean_prompt, sources, tool_results, repair_feedback=repair_feedback
-            )
+            if not sources and not tool_results:
+                draft = self.generator.draft(
+                    clean_prompt, sources, tool_results, repair_feedback=repair_feedback
+                )
+            else:
+                case = self.firm.init_case(clean_prompt, facts_memo, tool_results, sources)
+                for memo in self.firm.collaborate(case):
+                    agent_name = memo.get("from")
+                    title_map = {
+                        "analyst": "Qwen 2.5 1.5B • Junior CA Analyst",
+                        "senior": "DeepSeek-R1 Distill • Senior Partner (50-Yr Practice)",
+                    }
+                    yield StreamEvent(
+                        event_type="agent_memo",
+                        payload={
+                            "agent": agent_name,
+                            "title": title_map.get(agent_name, agent_name.capitalize()),
+                            "memo": memo,
+                        },
+                    )
+                    if memo.get("type") == "FINAL":
+                        final_memo = memo
+
+                final_content = final_memo.get("content", {}) if final_memo else {}
+                raw_sentences = final_content.get("final_answer", [])
+                mapped_sentences = []
+                for s in raw_sentences:
+                    t = s.get("text", "")
+                    cites = []
+                    for c in s.get("cites", []):
+                        c_str = str(c).strip().upper()
+                        if c_str.startswith("T") or c_str.startswith("R"):
+                            cites.append(0)
+                        elif c_str.startswith("S"):
+                            m_digit = re.search(r"\d+", c_str)
+                            if m_digit:
+                                cites.append(int(m_digit.group(0)))
+                        else:
+                            m_digit = re.search(r"\d+", c_str)
+                            if m_digit:
+                                val = int(m_digit.group(0))
+                                cites.append(val if sources else 0)
+                    mapped_sentences.append(SentenceItem(text=t, cites=cites))
+
+                if mapped_sentences:
+                    draft = GeneratorOutput(abstain=False, sentences=mapped_sentences)
+                else:
+                    draft = self.generator.draft(
+                        clean_prompt, sources, tool_results, repair_feedback=repair_feedback
+                    )
 
             # ---------------------------------------------------------
             # STEP 5: VERIFY
@@ -367,6 +429,7 @@ class OrchestratorStateMachine:
             for s in sources
         ]
 
+        final_content = final_memo.get("content", {}) if final_memo else {}
         yield StreamEvent(
             event_type="done",
             payload={
@@ -376,6 +439,10 @@ class OrchestratorStateMachine:
                 "tool_results": [t.model_dump() for t in tool_results],
                 "searched_sources": searched_sources if draft.abstain else [],
                 "repairs_attempted": repairs_attempted,
+                "notice_risk": final_content.get("notice_risk"),
+                "think": final_content.get("think"),
+                "official_proof": final_content.get("official_proof", []),
+                "closing_note": final_content.get("closing_note"),
             },
         )
 

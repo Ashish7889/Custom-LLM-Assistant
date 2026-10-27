@@ -55,7 +55,7 @@ def test_targeted_repair_feedback_generation():
 def test_designed_abstention_lists_searched_sources():
     """Verify that when state machine abstains, it returns the designed abstention object listing searched sources."""
     sm = OrchestratorStateMachine()
-    events = list(sm.run(prompt="What was the fictional revenue of non-existent entity qwertyuiop in year 1200?", session_id="test_abstain_sess", user_id="test_user"))
+    events = list(sm.run(prompt="What was the qwertyuiop asdfghjkl zxcvbnm for entity123456789?", session_id="test_abstain_sess", user_id="test_user", web_search=False))
 
     done_events = [e for e in events if e.event_type == "done"]
     assert len(done_events) == 1
