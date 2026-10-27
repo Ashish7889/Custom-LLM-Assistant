@@ -85,6 +85,11 @@ class StructuredGenerator:
 
     def _load_neural_model(self, model_key: str):
         """Load base model and attach the fine-tuned Personal CA LoRA adapter."""
+        import os
+        if os.environ.get("LOAD_MODEL_ON_STARTUP", "1") == "0" or (self.device == "cpu" and os.environ.get("LOAD_NEURAL_ON_CPU", "0") != "1"):
+            logger.info("Cloud/CPU mode (%s): skipping heavy neural download to ensure immediate port binding. Fast deterministic engine active.", self.device)
+            self.model = None
+            return
         try:
             import gc
             import torch
