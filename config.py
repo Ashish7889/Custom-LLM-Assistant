@@ -17,8 +17,8 @@ class FinSageConfig(BaseModel):
     # App & Server
     app_name: str = "FinSage"
     app_version: str = "0.1.0"
-    host: str = "127.0.0.1"
-    port: int = 8000
+    host: str = os.environ.get("HOST", "0.0.0.0")
+    port: int = int(os.environ.get("PORT", "8000"))
     debug: bool = False
 
     # Hardware & Model Architecture (3-Tier Multi-Agent: TinyLlama + Qwen + DeepSeek-R1)

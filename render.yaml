@@ -1,0 +1,12 @@
+﻿services:
+  - type: web
+    name: finsage-assistant
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: USE_CUDA
+        value: 0
