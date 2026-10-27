@@ -88,7 +88,7 @@ def clean_label_text(raw_label: str) -> str:
     raw_label = re.sub(r"\s+", " ", raw_label).strip()
 
     # 4. Strip leading numbering/bullets like "1.", "(a)", "•", "-"
-    raw_label = re.sub(r"^[\s\d\.\:\-\(\)a-zA-Z]{1,4}\s+", "", raw_label).strip()
+    raw_label = re.sub(r"^(?:[\d\.\:\-\*\•\#]+\s+|\([a-zA-Z0-9]+\)\s+|[a-zA-Z]\.\s+)", "", raw_label).strip()
     raw_label = raw_label.strip(" :.-,")
 
     # 5. Maximum 8 words (keep the words immediately preceding the amount)
