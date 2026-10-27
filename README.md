@@ -1,5 +1,7 @@
 # FinSage: Evidence-Grounded Financial Intelligence Assistant
 
+[![CI Quality Gate](https://github.com/Ashish7889/Custom-LLM-Assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/Ashish7889/Custom-LLM-Assistant/actions/workflows/ci.yml)
+
 FinSage is a small-model financial assistant built for factual evidence-grounding, self-verification, and strict abstention when unverified. It features a collaborative multi-agent Chartered Accountant (CA) firm architecture with specialized parsers for Indian tax and financial documents.
 
 **Hardware Target:** 6GB Laptop GPU (e.g., NVIDIA GeForce RTX 3060).  
