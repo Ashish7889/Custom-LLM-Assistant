@@ -615,6 +615,7 @@ class OrchestratorStateMachine:
                 f"• Under the New Tax Regime (Budget 2024-25), your total tax is ₹{res.new_regime_tax:,.2f}.\n"
                 f"• Under the Old Tax Regime, your total tax is ₹{res.old_regime_tax:,.2f}.\n"
                 f"• Recommendation: Choose {res.recommended_regime} to save ₹{res.tax_savings:,.2f}.\n"
+                f"• Standard Deduction: ₹75,000 under New Tax Regime reduces your taxable income significantly compared to the Old Regime.\n"
                 f"• Recommended ITR Form: {res.itr_form_suggested}.\n"
                 f"• Explanation: {res.explanation}"
             ),

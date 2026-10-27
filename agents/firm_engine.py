@@ -67,6 +67,7 @@ class FinSageFirm:
             "client_facts": client_facts,
             "open_questions": open_questions,
             "tool_results": t_strings,
+            "raw_tools": tool_results,
             "sources": s_dicts,
             "rules": STANDARD_RULES_KB,
             "memos": [facts_memo],

@@ -43,8 +43,8 @@ class FinSageConfig(BaseModel):
         },
         "deepseek_r1": {
             "name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-            "adapter_path": None,
-            "ca_adapter_path": None,
+            "adapter_path": BASE_DIR / "adapters" / "deepseek_ca",
+            "ca_adapter_path": BASE_DIR / "adapters" / "deepseek_ca",
             "template": "deepseek_r1",
             "load_in_4bit": True,   # DeepSeek-R1 1.5B loaded in 4-bit (~1.3GB)
         },

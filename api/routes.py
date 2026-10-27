@@ -53,6 +53,7 @@ async def get_models():
     """Retrieve active and available neural models for FinSage."""
     tiny_path = BASE_DIR / "adapters" / "tinyllama_ca"
     qwen_path = BASE_DIR / "adapters" / "qwen_ca"
+    deepseek_path = BASE_DIR / "adapters" / "deepseek_ca"
     return {
         "active_model": orchestrator.generator.active_model_key,
         "available_models": [
@@ -64,9 +65,15 @@ async def get_models():
             },
             {
                 "key": "qwen",
-                "name": "Qwen 2.5 1.5B Personal CA",
+                "name": "Qwen 2.5 1.5B Junior CA Analyst",
                 "params": "1.5B",
                 "ready": qwen_path.exists(),
+            },
+            {
+                "key": "deepseek_r1",
+                "name": "DeepSeek-R1 Distill 1.5B Senior Partner CA",
+                "params": "1.5B",
+                "ready": deepseek_path.exists(),
             },
         ],
     }
@@ -74,9 +81,9 @@ async def get_models():
 
 @router.post("/models/switch")
 async def switch_model(req: ModelSwitchRequest):
-    """Dynamically switch between fine-tuned TinyLlama and Qwen 2.5 on GPU."""
-    if req.model not in ["tinyllama", "qwen"]:
-        raise HTTPException(status_code=400, detail="Invalid model. Choose 'tinyllama' or 'qwen'.")
+    """Dynamically switch between fine-tuned TinyLlama, Qwen 2.5, and DeepSeek-R1 on GPU."""
+    if req.model not in ["tinyllama", "qwen", "deepseek_r1"]:
+        raise HTTPException(status_code=400, detail="Invalid model. Choose 'tinyllama', 'qwen', or 'deepseek_r1'.")
     orchestrator.generator.set_model(req.model)
     return {
         "status": "switched",
@@ -87,7 +94,7 @@ async def switch_model(req: ModelSwitchRequest):
 @router.post("/chat")
 async def chat_sse(request: ChatRequest):
     """Real-time Server-Sent Events (SSE) streaming endpoint."""
-    if request.model and request.model in ["tinyllama", "qwen"]:
+    if request.model and request.model in ["tinyllama", "qwen", "deepseek_r1"]:
         orchestrator.generator.set_model(request.model)
 
     session_id = request.session_id or db.create_session(request.user_id, title=request.prompt[:32])

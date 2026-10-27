@@ -10,12 +10,12 @@ class ChatRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=4000, description="User financial query or command")
     session_id: Optional[str] = Field(None, description="Active session ID")
     user_id: str = Field("default_user", description="Authenticated user ID")
-    model: Optional[str] = Field(None, description="Model key to use for inference: tinyllama or qwen")
+    model: Optional[str] = Field(None, description="Model key to use for inference: tinyllama, qwen, or deepseek_r1")
     web_search: bool = Field(True, description="Enable live internet search verification")
 
 
 class ModelSwitchRequest(BaseModel):
-    model: str = Field(..., description="Target model key: tinyllama or qwen")
+    model: str = Field(..., description="Target model key: tinyllama, qwen, or deepseek_r1")
 
 
 class SessionResponse(BaseModel):

@@ -30,24 +30,59 @@ class JuniorAnalyst:
 
         answer_sentences = []
 
-        # If deterministic tools produced computation, lead with direct tool answers
-        if tool_results:
+        raw_tools = case.get("raw_tools", [])
+        tax_tr = next((tr for tr in raw_tools if getattr(tr, "tool_name", "") == "tax_calculator_india"), None)
+
+        # 1. Specialized Warm Family Accountant Voice for Tax Computations
+        if tax_tr and getattr(tax_tr, "output_data", None):
+            d = tax_tr.output_data
+            new_tax = f"₹{d.get('new_regime_tax', 0):,.2f}"
+            old_tax = f"₹{d.get('old_regime_tax', 0):,.2f}"
+            savings = f"₹{d.get('tax_savings', 0):,.2f}"
+            rec = d.get('recommended_regime', 'New Tax Regime')
+
+            if d.get('new_regime_tax', 0) == 0:
+                answer_sentences.append({
+                    "text": f"You do not have to pay any income tax under the {rec} this year.",
+                    "cites": ["T1"]
+                })
+                answer_sentences.append({
+                    "text": f"That is a great relief because under the Old Regime your tax would have been {old_tax}, saving you a clean {savings}.",
+                    "cites": ["T1"]
+                })
+            else:
+                answer_sentences.append({
+                    "text": f"Under the New Tax Regime, your total tax liability comes out to {new_tax} for the financial year.",
+                    "cites": ["T1"]
+                })
+                answer_sentences.append({
+                    "text": f"I am pleased to share that choosing the New Regime saves you a substantial {savings} compared to the Old Regime tax of {old_tax}.",
+                    "cites": ["T1"]
+                })
+
+            answer_sentences.append({
+                "text": f"The {rec} is recommended because the ₹75,000 standard deduction reduces your taxable income significantly compared to the Old Regime.",
+                "cites": ["T1"]
+            })
+            answer_sentences.append({
+                "text": f"For your next step, pick the {rec} when filing your ITR-1, and take two minutes to check that your salary TDS matches Form 26AS.",
+                "cites": ["T1"]
+            })
+
+        # 2. General Tool & Source Grounding
+        elif tool_results:
             for idx, tr in enumerate(tool_results):
                 cite_tag = f"T{idx+1}"
-                # Format key numbers cleanly
                 clean_tr = re.sub(r"^TOOL_RESULT\s*\[[^\]]+\]:\s*", "", str(tr)).strip()
-                # Break into short sentences
                 parts = [p.strip() for p in re.split(r"(?<!\d)\.(?!\d)\s*", clean_tr) if p.strip()]
                 for p in parts[:4]:
                     text = p if p.endswith(".") else f"{p}."
                     answer_sentences.append({"text": text, "cites": [cite_tag]})
 
-        # Incorporate official sources if available
         if sources and len(answer_sentences) < 5:
             for idx, s in enumerate(sources[:2]):
                 cite_tag = f"S{idx+1}"
                 s_text = s.get("text", "")
-                # Find the most relevant factual sentence
                 s_parts = [p.strip() for p in re.split(r"(?<!\d)\.(?!\d)\s*", s_text) if p.strip()]
                 for p in s_parts[:2]:
                     if len(answer_sentences) >= 5:
